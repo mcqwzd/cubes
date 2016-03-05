@@ -4,9 +4,11 @@
  */
 package com.cubes;
 
+import static com.cubes.BlockTerrainControl.getLocalBlockLocation;
 import java.util.List;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
+import com.jme3.terrain.Terrain;
 
 /**
  *
@@ -19,12 +21,14 @@ public abstract class BlockShape{
     protected List<Short> indices;
     protected List<Float> normals;
     protected List<Vector2f> textureCoordinates;
+    protected List<Float> lightColors;
     
-    public void prepare(boolean isTransparent, List<Vector3f> positions, List<Short> indices, List<Float> normals, List<Vector2f> textureCoordinates){
+    public void prepare(boolean isTransparent, List<Vector3f> positions, List<Short> indices, List<Float> normals, List<Vector2f> textureCoordinates, List<Float> lightColors){
         this.positions = positions;
         this.indices = indices;
         this.normals = normals;
         this.textureCoordinates = textureCoordinates;
+        this.lightColors = lightColors;
         this.isTransparent = isTransparent;
     }
     
@@ -36,6 +40,10 @@ public abstract class BlockShape{
         if(blockSkin.isTransparent() == isTransparent){
             Vector3Int neighborBlockLocation = BlockNavigator.getNeighborBlockLocalLocation(blockLocation, face);
             Block neighborBlock = chunk.getBlock(neighborBlockLocation);
+            if (neighborBlock == null) {
+                Vector3Int neighborGlobalBlock = chunk.getNeighborBlockGlobalLocation(blockLocation, face);
+                neighborBlock = chunk.getTerrain().getBlock(neighborGlobalBlock);
+            }
             if(neighborBlock != null){
                 BlockSkin neighborBlockSkin = neighborBlock.getSkin(chunk, blockLocation, face);
                 if(blockSkin.isTransparent() != neighborBlockSkin.isTransparent()){
@@ -44,9 +52,17 @@ public abstract class BlockShape{
                 BlockShape neighborShape = neighborBlock.getShape(chunk, neighborBlockLocation);
                 return (!(canBeMerged(face) && neighborShape.canBeMerged(BlockNavigator.getOppositeFace(face))));
             }
+            else {
+            }
             return true;
         }
         return false;
+    }
+    
+    protected boolean isFaceAboveSurface(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face) {
+        Vector3Int neighborBlock = chunk.getNeighborBlockGlobalLocation(blockLocation, face);
+        BlockTerrainControl terrain = chunk.getTerrain();
+        return terrain.getGlobalLocationAboveSurface(neighborBlock);
     }
     
     protected abstract boolean canBeMerged(Block.Face face);

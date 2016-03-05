@@ -165,6 +165,19 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         return chunks.containsKey(keyify(location));
     }
     
+    public boolean getGlobalLocationAboveSurface(Vector3Int blockLocation) {
+        if(blockLocation.hasNegativeCoordinate()){
+            return true;
+        }
+        Vector3Int chunkLoc = getChunkLocation(blockLocation);
+        String key = keyify(chunkLoc);
+        BlockChunkControl chunk = chunks.get(key);
+        if (chunk == null) {
+            return true; // missing chunks don't block light
+        }
+        return chunk.isBlockAboveSurface(getLocalBlockLocation(blockLocation, chunk));
+    }
+    
     /** Get chunk location from block location */
     public Vector3Int getChunkLocation(Vector3Int blockLocation){
         Vector3Int chunkLocation = new Vector3Int();

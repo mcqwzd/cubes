@@ -79,11 +79,13 @@ public class TestPhysics extends SimpleApplication implements ActionListener{
             public void onSpatialUpdated(BlockChunkControl blockChunk){
                 Geometry optimizedGeometry = blockChunk.getOptimizedGeometry_Opaque();
                 RigidBodyControl rigidBodyControl = optimizedGeometry.getControl(RigidBodyControl.class);
-                if(rigidBodyControl == null){
-                    rigidBodyControl = new RigidBodyControl(0);
-                    optimizedGeometry.addControl(rigidBodyControl);
-                    bulletAppState.getPhysicsSpace().add(rigidBodyControl);
+                 if (rigidBodyControl != null) {
+                    optimizedGeometry.removeControl(rigidBodyControl);
+                    bulletAppState.getPhysicsSpace().remove(rigidBodyControl);
                 }
+                rigidBodyControl = new RigidBodyControl(0);
+                optimizedGeometry.addControl(rigidBodyControl);
+                bulletAppState.getPhysicsSpace().add(rigidBodyControl);
                 rigidBodyControl.setCollisionShape(new MeshCollisionShape(optimizedGeometry.getMesh()));
             }
         });

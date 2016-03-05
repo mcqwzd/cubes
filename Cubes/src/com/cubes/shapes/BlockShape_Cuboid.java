@@ -33,18 +33,23 @@ public class BlockShape_Cuboid extends BlockShape{
         Vector3f faceLoc_Top_TopRight = blockLocation3f.add(new Vector3f((0.5f + extents[3]), (0.5f + extents[0]), (0.5f - extents[5])));
         Vector3f faceLoc_Top_BottomLeft = blockLocation3f.add(new Vector3f((0.5f - extents[2]), (0.5f + extents[0]), (0.5f + extents[4])));
         Vector3f faceLoc_Top_BottomRight = blockLocation3f.add(new Vector3f((0.5f + extents[3]), (0.5f + extents[0]), (0.5f + extents[4])));
+        float lightColor = 0f;
+        float aboveLightLevel = 1f;
+        float caveLightLevel = 0.4f;
+
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Top)){
-            addFaceIndices(indices, positions.size());
+            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Top) ? aboveLightLevel : caveLightLevel; 
+            addFaceIndices(indices, positions.size(), lightColor, lightColor, lightColor);
             positions.add(faceLoc_Top_BottomLeft);
             positions.add(faceLoc_Top_BottomRight);
             positions.add(faceLoc_Top_TopLeft);
             positions.add(faceLoc_Top_TopRight);
-            addSquareNormals(normals, 0, 1, 0);
-            
+            addSquareNormals(normals, 0, 1, 0);            
             addTextureCoordinates(chunk, textureCoordinates, block.getSkin(chunk, blockLocation, Block.Face.Top).getTextureLocation());
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Bottom)){
-            addFaceIndices(indices, positions.size());
+            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Bottom) ? aboveLightLevel : caveLightLevel; 
+            addFaceIndices(indices, positions.size(), lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_BottomRight);
             positions.add(faceLoc_Bottom_BottomLeft);
             positions.add(faceLoc_Bottom_TopRight);
@@ -53,7 +58,8 @@ public class BlockShape_Cuboid extends BlockShape{
             addTextureCoordinates(chunk, textureCoordinates, block.getSkin(chunk, blockLocation, Block.Face.Bottom).getTextureLocation());
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Left)){
-            addFaceIndices(indices, positions.size());
+            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Left) ? aboveLightLevel : caveLightLevel; 
+            addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_TopLeft);
             positions.add(faceLoc_Bottom_BottomLeft);
             positions.add(faceLoc_Top_TopLeft);
@@ -62,7 +68,8 @@ public class BlockShape_Cuboid extends BlockShape{
             addTextureCoordinates(chunk, textureCoordinates, block.getSkin(chunk, blockLocation, Block.Face.Left).getTextureLocation());
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Right)){
-            addFaceIndices(indices, positions.size());
+            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Right) ? aboveLightLevel : caveLightLevel; 
+            addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_BottomRight);
             positions.add(faceLoc_Bottom_TopRight);
             positions.add(faceLoc_Top_BottomRight);
@@ -71,7 +78,8 @@ public class BlockShape_Cuboid extends BlockShape{
             addTextureCoordinates(chunk, textureCoordinates, block.getSkin(chunk, blockLocation, Block.Face.Right).getTextureLocation());
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Front)){
-            addFaceIndices(indices, positions.size());
+            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Front) ? aboveLightLevel : caveLightLevel; 
+            addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_BottomLeft);
             positions.add(faceLoc_Bottom_BottomRight);
             positions.add(faceLoc_Top_BottomLeft);
@@ -80,7 +88,8 @@ public class BlockShape_Cuboid extends BlockShape{
             addTextureCoordinates(chunk, textureCoordinates,block.getSkin(chunk, blockLocation, Block.Face.Front).getTextureLocation());
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Back)){
-            addFaceIndices(indices, positions.size());
+            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Back) ? aboveLightLevel : caveLightLevel; 
+            addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_TopRight);
             positions.add(faceLoc_Bottom_TopLeft);
             positions.add(faceLoc_Top_TopRight);
@@ -90,15 +99,21 @@ public class BlockShape_Cuboid extends BlockShape{
         }
     }
 
-    private void addFaceIndices(List<Short> indices, int offset){
+    private void addFaceIndices(List<Short> indices, int offset, float lightColor1, float lightColor2, float lightColor3){
         indices.add((short) (offset + 2));
         indices.add((short) (offset + 0));
         indices.add((short) (offset + 1));
         indices.add((short) (offset + 1));
         indices.add((short) (offset + 3));
         indices.add((short) (offset + 2));
+        for( int i = 0; i < 4; ++i) {
+            lightColors.add(lightColor1);
+            lightColors.add(lightColor2);
+            lightColors.add(lightColor3);
+            lightColors.add(1f);
+        }
     }
-    
+  
     private void addSquareNormals(List<Float> normals, float normalX, float normalY, float normalZ){
         for(int i=0;i<4;i++){
             normals.add(normalX);

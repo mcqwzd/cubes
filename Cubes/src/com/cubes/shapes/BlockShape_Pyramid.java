@@ -35,6 +35,12 @@ public class BlockShape_Pyramid extends BlockShape{
             indices.add((short) (indexOffset + 3));
             indices.add((short) (indexOffset + 2));
             indexOffset += 4;
+            for( int i = 0; i < 4; ++i) {
+                lightColors.add(1f);
+                lightColors.add(1f);
+                lightColors.add(1f);
+                lightColors.add(1f);
+            }            
             for(int i=0;i<4;i++){
                 normals.add(0f);
                 normals.add(-1f);
@@ -54,6 +60,12 @@ public class BlockShape_Pyramid extends BlockShape{
         indices.add((short) (indexOffset + 1));
         indices.add((short) (indexOffset + 2));
         indexOffset += 3;
+        for( int i = 0; i < 4; ++i) {
+            lightColors.add(1f);
+            lightColors.add(1f);
+            lightColors.add(1f);
+            lightColors.add(1f);
+        }            
         addTriangleNormals(0, 0, 1);
         addTextureCoordinates_Side(block, chunk, blockLocation, Block.Face.Front);
         //Left
@@ -64,6 +76,12 @@ public class BlockShape_Pyramid extends BlockShape{
         indices.add((short) (indexOffset + 1));
         indices.add((short) (indexOffset + 2));
         indexOffset += 3;
+        for( int i = 0; i < 4; ++i) {
+            lightColors.add(1f);
+            lightColors.add(1f);
+            lightColors.add(1f);
+            lightColors.add(1f);
+        }            
         addTriangleNormals(-1, 0, 0);
         addTextureCoordinates_Side(block, chunk, blockLocation, Block.Face.Left);
         //Back
@@ -74,6 +92,12 @@ public class BlockShape_Pyramid extends BlockShape{
         indices.add((short) (indexOffset + 1));
         indices.add((short) (indexOffset + 2));
         indexOffset += 3;
+        for( int i = 0; i < 4; ++i) {
+            lightColors.add(1f);
+            lightColors.add(1f);
+            lightColors.add(1f);
+            lightColors.add(1f);
+        }            
         addTriangleNormals(0, 0, -1);
         addTextureCoordinates_Side(block, chunk, blockLocation, Block.Face.Back);
         //Right
@@ -83,6 +107,12 @@ public class BlockShape_Pyramid extends BlockShape{
         indices.add((short) (indexOffset + 0));
         indices.add((short) (indexOffset + 1));
         indices.add((short) (indexOffset + 2));
+        for( int i = 0; i < 4; ++i) {
+           lightColors.add(1f);
+           lightColors.add(1f);
+           lightColors.add(1f);
+           lightColors.add(1f);
+        }            
         indexOffset += 3;
         addTriangleNormals(1, 0, 0);
         addTextureCoordinates_Side(block, chunk, blockLocation, Block.Face.Right);

@@ -25,16 +25,28 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
     public BlockChunkControl(BlockTerrainControl terrain, int x, int y, int z){
         this.terrain = terrain;
         location.set(x, y, z);
-        blockLocation.set(location.mult(terrain.getSettings().getChunkSizeX(), terrain.getSettings().getChunkSizeY(), terrain.getSettings().getChunkSizeZ()));
+        int cX = terrain.getSettings().getChunkSizeX();
+        int cY = terrain.getSettings().getChunkSizeY();
+        int cZ = terrain.getSettings().getChunkSizeZ();
+        if (cY > 256) {
+            // to support more than 256, blocks on surface (and probobly other things) needs to be larger than byte
+            throw new UnsupportedOperationException("Chunks taller than 256 are not supported");
+        }
+        blockLocation.set(location.mult(cX, cY, cZ));
         node.setLocalTranslation(new Vector3f(blockLocation.getX(), blockLocation.getY(), blockLocation.getZ()).mult(terrain.getSettings().getBlockSize()));
-        blockTypes = new byte[terrain.getSettings().getChunkSizeX()][terrain.getSettings().getChunkSizeY()][terrain.getSettings().getChunkSizeZ()];
-        blocks_IsOnSurface = new boolean[terrain.getSettings().getChunkSizeX()][terrain.getSettings().getChunkSizeY()][terrain.getSettings().getChunkSizeZ()];
+        blockTypes = new byte[cX][cY][cZ];
+        blocks_IsOnSurface = new byte[cX][cZ];
+        for( int iX = 0; iX < cX; ++iX) {
+            for (int iZ = 0; iZ < cZ; ++iZ) {
+                blocks_IsOnSurface[iX][iZ] = 0;
+            }
+        }
     }
     private BlockTerrainControl terrain;
     private Vector3Int location = new Vector3Int();
     private Vector3Int blockLocation = new Vector3Int();
     private byte[][][] blockTypes;
-    private boolean[][][] blocks_IsOnSurface;
+    private byte[][] blocks_IsOnSurface;
     private Node node = new Node();
     private Geometry optimizedGeometry_Opaque;
     private Geometry optimizedGeometry_Transparent;
@@ -78,7 +90,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         return terrain.getBlock(getNeighborBlockGlobalLocation(location, face));
     }
     
-    private Vector3Int getNeighborBlockGlobalLocation(Vector3Int location, Block.Face face){
+    public Vector3Int getNeighborBlockGlobalLocation(Vector3Int location, Block.Face face){
         Vector3Int neighborLocation = BlockNavigator.getNeighborBlockLocalLocation(location, face);
         neighborLocation.addLocal(blockLocation);
         return neighborLocation;
@@ -149,19 +161,65 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         for(int i=0;i<Block.Face.values().length;i++){
             Vector3Int neighborLocation = getNeighborBlockGlobalLocation(location, Block.Face.values()[i]);
             BlockChunkControl chunk = terrain.getChunk(neighborLocation);
+            /*if(chunk == null){
+                Vector3Int neighborGlobalBlock = getNeighborBlockGlobalLocation(blockLocation, Block.Face.values()[i]);
+                chunk = getTerrain().getChunk(neighborGlobalBlock);
+                if (chunk != null) {
+                    System.out.println("Found chunk at " + blockLocation);
+                } else {
+                    System.out.println("Did not find chunk at " + blockLocation);
+                }
+            }*/
             if(chunk != null){
                 chunk.updateBlockInformation(neighborLocation.subtract(chunk.getBlockLocation()));
+                chunk.needsMeshUpdate = true;
             }
         }
     }
-    
+        
     private void updateBlockInformation(Vector3Int location){
-        Block neighborBlock_Top = terrain.getBlock(getNeighborBlockGlobalLocation(location, Block.Face.Top));
-        blocks_IsOnSurface[location.getX()][location.getY()][location.getZ()] = (neighborBlock_Top == null);
+    //    Block neighborBlock_Top = terrain.getBlock(getNeighborBlockGlobalLocation(location, Block.Face.Top));
+    //    if blocks_IsOnSurface[location.getX()][location.getZ()] = (neighborBlock_Top == null);
+        Block block = getBlock(location);
+        // If the block is set
+        if (block != null) {
+            // if the block is higher up than the surface block
+            if (location.getY() > blocks_IsOnSurface[location.getX()][location.getZ()]) {
+                // then it is the new surface block
+                blocks_IsOnSurface[location.getX()][location.getZ()] = (byte)location.getY();
+            }
+        }
+        // else block is cleared
+        else {
+            // if the block used to be the surface block
+            if (location.getY() == blocks_IsOnSurface[location.getX()][location.getZ()]) {
+                // then find the next block down to be surface
+                int searchY = location.getY();
+                for (; searchY > 0; --searchY) {
+                    block = getBlock(new Vector3Int(location.getX(), searchY, location.getZ()));
+                    if (block != null) {
+                        blocks_IsOnSurface[location.getX()][location.getZ()] = (byte)searchY;
+                        break;
+                    }                
+                }
+                if (0 == searchY) {
+                    blocks_IsOnSurface[location.getX()][location.getZ()] = 0;    
+                }    
+            }
+        }
     }
 
     public boolean isBlockOnSurface(Vector3Int location){
-        return blocks_IsOnSurface[location.getX()][location.getY()][location.getZ()];
+        return blocks_IsOnSurface[location.getX()][location.getZ()] == (byte)location.getY();
+    }
+    
+    public boolean isBlockAboveSurface(Vector3Int location) {
+        if (location.getX() >= 0 && location.getX() <= blocks_IsOnSurface.length &&
+            location.getZ() >= 0 && location.getZ() <= blocks_IsOnSurface[0].length) {
+            return blocks_IsOnSurface[location.getX()][location.getZ()] <= (byte)location.getY();
+        } else {
+            return false;
+        }
     }
 
     public BlockTerrainControl getTerrain(){

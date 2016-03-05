@@ -22,12 +22,14 @@ public class BlockChunk_MeshOptimizer{
     private static short[] indices;
     private static Vector2f[] textureCoordinates;
     private static float[] normals;
+    private static float[] lightColors;
 
     public static Mesh generateOptimizedMesh(BlockChunkControl blockChunk, boolean isTransparent){
         LinkedList<Vector3f> positionsList = new LinkedList<Vector3f>();
         LinkedList<Short> indicesList = new LinkedList<Short>();
         LinkedList<Float> normalsList = new LinkedList<Float>();
         LinkedList<Vector2f> textureCoordinatesList = new LinkedList<Vector2f>();
+        LinkedList<Float> lightColorsList = new LinkedList<Float>();
         BlockTerrainControl blockTerrain = blockChunk.getTerrain();
         Vector3Int tmpLocation = new Vector3Int();
         for(int x=0;x<blockTerrain.getSettings().getChunkSizeX();x++){
@@ -37,7 +39,7 @@ public class BlockChunk_MeshOptimizer{
                     Block block = blockChunk.getBlock(tmpLocation);
                     if(block != null){
                         BlockShape blockShape = block.getShape(blockChunk, tmpLocation);
-                        blockShape.prepare(isTransparent, positionsList, indicesList, normalsList, textureCoordinatesList);
+                        blockShape.prepare(isTransparent, positionsList, indicesList, normalsList, textureCoordinatesList, lightColorsList);
                         blockShape.addTo(blockChunk, tmpLocation);
                     }
                 }
@@ -59,6 +61,11 @@ public class BlockChunk_MeshOptimizer{
         for(int i=0;normalsIterator.hasNext();i++){
             normals[i] = normalsIterator.next();
         }
+        lightColors = new float[lightColorsList.size()];
+        Iterator<Float> lightColorsIterator = lightColorsList.iterator();
+        for(int i=0;lightColorsIterator.hasNext();i++){
+            lightColors[i] = lightColorsIterator.next();
+        }
         return generateMesh();
     }
 
@@ -68,6 +75,7 @@ public class BlockChunk_MeshOptimizer{
         mesh.setBuffer(Type.Index, 1, BufferUtils.createShortBuffer(indices));
         mesh.setBuffer(Type.Normal, 3, BufferUtils.createFloatBuffer(normals));
         mesh.setBuffer(Type.TexCoord, 2, BufferUtils.createFloatBuffer(textureCoordinates));
+        mesh.setBuffer(Type.Color, 4, lightColors);
         mesh.updateBound();
         return mesh;
     }
