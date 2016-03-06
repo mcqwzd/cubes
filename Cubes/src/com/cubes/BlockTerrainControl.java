@@ -17,6 +17,8 @@ import com.cubes.network.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  *
@@ -150,6 +152,234 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         return null;
     }
     
+    public void removeLightSource(HashMap<String, LightQueueElement> lightsToRemove) {
+        if (lightsToRemove.size() == 0) {
+            return;
+        }
+        for (LightQueueElement element : lightsToRemove.values()) {
+            removeLightSource(getGlobalBlockLocation(element.getLocation(), element.getChunk()));
+        }
+     }
+
+    public void addLightSource(HashMap<String, LightQueueElement> lightsToAdd) {
+        if (lightsToAdd.size() == 0) {
+            return;
+        }
+        //System.err.println("addLightSource " + lightsToAdd.size());
+        if (!getSettings().getLightsEnabled()) {
+            System.out.println("AddLightSource called with lights disabled");
+            return;
+        }
+        class propigateElement {
+            public Vector3Int location;
+            public byte brightness;
+            public propigateElement(Vector3Int location, byte brightness) {
+                this.location = location;
+                this.brightness = brightness;
+            }
+        }
+        
+        Queue<propigateElement> locationsToPropigateTo = new LinkedList<propigateElement>();
+        Queue<propigateElement> next = new LinkedList<propigateElement>();
+            
+        for (LightQueueElement element : lightsToAdd.values()) {
+            byte brightness = element.getLevel();
+            Vector3Int globalLocation = getGlobalBlockLocation(element.getLocation(), element.getChunk());
+            boolean placeLight = element.getPlaceLight();
+
+            if (debugLogs) {
+                System.out.println("addLightSource " + globalLocation + " level " + brightness + " place " + placeLight);
+            }
+            if (brightness <= 0) {
+                continue;
+            }
+
+            BlockChunkControl chunk = element.getChunk();
+            if (chunk == null) {
+                continue;
+            }
+            Vector3Int localBlockLocation = element.getLocation();
+            if (placeLight) {
+                if (!chunk.addLightSource(localBlockLocation, brightness)) {
+                    continue;
+                }
+            }
+            // if the light source is brighter than the light currently at this spot
+            if (chunk.propigateLight(localBlockLocation, brightness) || !placeLight) {
+                if (brightness > 1) {
+                    for(int face = 0; face < Block.Face.values().length; face++){
+                        Vector3Int neighborLocation = BlockNavigator.getNeighborBlockLocalLocation(globalLocation, Block.Face.values()[face]);
+                        locationsToPropigateTo.add(new propigateElement(neighborLocation, (byte)(brightness-1)));
+                    }
+                }
+            }
+        }
+        
+        while (locationsToPropigateTo.size() > 0) {
+            propigateElement p = locationsToPropigateTo.remove();
+            Vector3Int location = p.location;
+            byte brightness = p.brightness;
+            if (debugLogs) {
+                System.out.println("addLightSource  locationsToPropigateTo " + location + " level " + brightness + " place ");
+            }
+
+            
+            BlockChunkControl chunk;
+            chunk = getChunk(location);
+            Vector3Int localBlockLocation;
+            if (chunk != null) {
+                localBlockLocation = getLocalBlockLocation(location, chunk);
+                if (chunk.propigateLight(localBlockLocation, brightness)) {
+                    if (brightness > 1) {
+                        for(int face = 0; face < Block.Face.values().length; face++){
+                            Vector3Int neighborLocation = BlockNavigator.getNeighborBlockLocalLocation(location, Block.Face.values()[face]);
+                            locationsToPropigateTo.add(new propigateElement(neighborLocation, (byte)(brightness-1)));
+                        }
+                    }
+                }
+            }
+            if (locationsToPropigateTo.size() == 0) {
+                locationsToPropigateTo = next;
+                next = new LinkedList<propigateElement>();
+            }
+        }
+    }
+
+    public void addLightSource(Vector3Int globalLocation, byte brightness) {
+        addLightSource(globalLocation, brightness, true);
+        if (getLightLevelOfBlock(globalLocation) != getLightSourceOfBlock(globalLocation)) {
+            addLightSource(globalLocation, brightness, true);
+        }
+    }
+
+    
+    public void addLightSource(Vector3Int globalLocation, byte brightness, boolean placeLight) {
+        if (!getSettings().getLightsEnabled()) {
+            System.out.println("AddLightSource called with lights disabled");
+            return;
+        }
+        if (brightness <= 0) {
+            return;
+        }
+
+        BlockChunkControl chunk = getChunk(globalLocation);
+        if (chunk == null) {
+            return;
+        }
+        Vector3Int localBlockLocation = getLocalBlockLocation(globalLocation, chunk);
+        if (placeLight) {
+            if (!chunk.addLightSource(localBlockLocation, brightness)) {
+                return;
+            }
+        }
+
+        // if the light source is brighter than the light currently at this spot
+        if (chunk.propigateLight(localBlockLocation, brightness) || !placeLight) {
+            brightness--;
+            Queue<Vector3Int> locationsToPropigateTo = new LinkedList<Vector3Int>();
+            Queue<Vector3Int> next = new LinkedList<Vector3Int>();
+            for(int face = 0; face < Block.Face.values().length; face++){
+                Vector3Int neighborLocation = BlockNavigator.getNeighborBlockLocalLocation(globalLocation, Block.Face.values()[face]);
+                locationsToPropigateTo.add(neighborLocation);
+            }
+            while (locationsToPropigateTo.size() > 0 && brightness > 0) {
+                Vector3Int location = locationsToPropigateTo.remove();
+                chunk = getChunk(location);
+                if (chunk != null) {
+                    localBlockLocation = getLocalBlockLocation(location, chunk);
+                    if (chunk.propigateLight(localBlockLocation, brightness)) {
+                        for(int face = 0; face < Block.Face.values().length; face++){
+                            Vector3Int neighborLocation = BlockNavigator.getNeighborBlockLocalLocation(location, Block.Face.values()[face]);
+                            next.add(neighborLocation);
+                        }
+                    }
+                }
+                if (locationsToPropigateTo.size() == 0) {
+                    locationsToPropigateTo = next;
+                    next = new LinkedList<Vector3Int>();
+                    brightness--;
+                }
+            }
+        }
+    }
+
+
+    // TODO: Optimize this so it doesn't have to propigate as far
+    // if it sees an incline in light level, it could stop propigatind darkness there
+    // and propigate that light level instead.
+    public static boolean debugLogs = false;
+    public void removeLightSource(Vector3Int globalLocation) {
+        if (!getSettings().getLightsEnabled()) {
+            System.out.println("AddLightSource called with lights disabled");
+            return;
+        }
+        BlockChunkControl chunk = getChunk(globalLocation);
+        if (chunk == null) {
+            return;
+        }
+        Vector3Int localBlockLocation = getLocalBlockLocation(globalLocation, chunk);
+        byte oldLight = (byte)Math.max(chunk.getLightSourceAt(localBlockLocation), chunk.getLightAt(localBlockLocation));
+        chunk.addLightSource(localBlockLocation, (byte)0);
+
+        HashMap<String, LightQueueElement> lightsToReplace = new HashMap<String, LightQueueElement>();
+        chunk.propigateDark(localBlockLocation, oldLight);//) {
+        Queue<Vector3Int> locationsToPropigateTo = new LinkedList<Vector3Int>();
+        Queue<Vector3Int> next = new LinkedList<Vector3Int>();
+        for(int face = 0; face < Block.Face.values().length; face++){
+            Vector3Int neighborLocation = BlockNavigator.getNeighborBlockLocalLocation(globalLocation, Block.Face.values()[face]);
+            locationsToPropigateTo.add(neighborLocation);
+        }
+        oldLight--;
+        boolean debugLogs = this.debugLogs;
+        while (locationsToPropigateTo.size() > 0 && oldLight >= 0) {
+            Vector3Int location = locationsToPropigateTo.remove();
+            chunk = getChunk(location);
+            if (chunk != null) {
+                if (debugLogs) {
+                    debugLogs = true;
+                    System.out.println("removeLightSource while loop on " + location.toString());
+                }
+                localBlockLocation = getLocalBlockLocation(location, chunk);
+                if (chunk.getLightSourceAt(localBlockLocation) > 0) {
+                    if (debugLogs) {
+                        System.out.println("source light > 0 " + location.toString());
+                        System.out.println("add to lights to replace with " + location.toString() + " light:" + chunk.getLightSourceAt(localBlockLocation));
+                    }                        
+                    lightsToReplace.put(keyify(location), new LightQueueElement(localBlockLocation,chunk,chunk.getLightSourceAt(localBlockLocation),false));
+                } else if (chunk.propigateDark(localBlockLocation, oldLight)) {
+                    if (debugLogs) {
+                        System.out.println("adding faces > 0 " + location.toString());
+                    }
+                    for(int face = 0; face < Block.Face.values().length; face++){
+                        Vector3Int neighborLocation = BlockNavigator.getNeighborBlockLocalLocation(location, Block.Face.values()[face]);
+                        next.add(neighborLocation);
+                    }
+                } else {
+                    if (debugLogs) {
+                        System.out.println("else " + location.toString());
+                    }
+                    byte light = chunk.getLightAt(localBlockLocation);
+                    if(light > 0) {
+                        if (debugLogs) {
+                            System.out.println("light at > 0 " + location.toString());
+                            System.out.println("add to lights to replace with " + location.toString() + " light:" + light);
+                        }
+                        lightsToReplace.put(keyify(location), new LightQueueElement(localBlockLocation,chunk,light,false));
+                    }
+                }
+                if (locationsToPropigateTo.size() == 0) {
+                    if (debugLogs) {
+                        System.out.println("next cycle");
+                    }
+                    locationsToPropigateTo = next;
+                    next = new LinkedList<Vector3Int>();
+                    oldLight--;
+                }
+            }
+        }
+        addLightSource(lightsToReplace);
+    }
+    
     public BlockChunkControl getChunk(Vector3Int blockLocation){
         if(blockLocation.hasNegativeCoordinate()){
             return null;
@@ -165,7 +395,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         return chunks.containsKey(keyify(location));
     }
     
-    public boolean getGlobalLocationAboveSurface(Vector3Int blockLocation) {
+    public boolean getIsGlobalLocationAboveSurface(Vector3Int blockLocation) {
         if(blockLocation.hasNegativeCoordinate()){
             return true;
         }
@@ -187,12 +417,30 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         chunkLocation.set(chunkX, chunkY, chunkZ);
         return chunkLocation;
     }
-    
-    public static Vector3Int getLocalBlockLocation(Vector3Int blockLocation, BlockChunkControl chunk){
+
+    /*
+    public Vector3Int getLocalBlockLocation(Vector3Int blockLocation){
         Vector3Int localLocation = new Vector3Int();
-        int localX = (blockLocation.getX() - chunk.getBlockLocation().getX());
-        int localY = (blockLocation.getY() - chunk.getBlockLocation().getY());
-        int localZ = (blockLocation.getZ() - chunk.getBlockLocation().getZ());
+        int localX = (blockLocation.getX() % settings.getChunkSizeX());
+        int localY = (blockLocation.getY() % settings.getChunkSizeY());
+        int localZ = (blockLocation.getZ() % settings.getChunkSizeZ());
+        localLocation.set(localX, localY, localZ);
+        return localLocation;
+    }
+    */
+    public static Vector3Int getGlobalBlockLocation(Vector3Int localLocation, BlockChunkControl chunk) {
+        Vector3Int globalLocation = new Vector3Int();
+        int localX = (localLocation.getX() + chunk.getBlockLocation().getX());
+        int localY = (localLocation.getY() + chunk.getBlockLocation().getY());
+        int localZ = (localLocation.getZ() + chunk.getBlockLocation().getZ());
+        globalLocation.set(localX, localY, localZ);
+        return globalLocation;
+    }
+    public static Vector3Int getLocalBlockLocation(Vector3Int globalBlockLocation, BlockChunkControl chunk){
+        Vector3Int localLocation = new Vector3Int();
+        int localX = (globalBlockLocation.getX() - chunk.getBlockLocation().getX());
+        int localY = (globalBlockLocation.getY() - chunk.getBlockLocation().getY());
+        int localZ = (globalBlockLocation.getZ() - chunk.getBlockLocation().getZ());
         localLocation.set(localX, localY, localZ);
         return localLocation;
     }
@@ -396,5 +644,24 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
              ex.printStackTrace();
          }
     }
+
+    byte getLightLevelOfBlock(Vector3Int globalLocation) {
+        BlockChunkControl chunk = getChunk(globalLocation);
+        if (chunk == null) {
+            return 0;
+        }
+        Vector3Int localBlockLocation = getLocalBlockLocation(globalLocation, chunk);
+        return chunk.getLightAt(localBlockLocation);
+    }
+    
+    byte getLightSourceOfBlock(Vector3Int globalLocation) {
+        BlockChunkControl chunk = getChunk(globalLocation);
+        if (chunk == null) {
+            return 0;
+        }
+        Vector3Int localBlockLocation = getLocalBlockLocation(globalLocation, chunk);
+        return chunk.getLightSourceAt(localBlockLocation);
+    }
+
 
 }

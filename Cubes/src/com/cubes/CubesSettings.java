@@ -27,6 +27,8 @@ public class CubesSettings{
     private Material blockMaterial;
     private int texturesCountX = 16;
     private int texturesCountY = 16;
+    private boolean lightsEnabled = false;
+    private byte sunlight = 9;
 
     public AssetManager getAssetManager(){
         return assetManager;
@@ -89,5 +91,20 @@ public class CubesSettings{
     public void setTexturesCount(int texturesCountX, int texturesCountY){
         this.texturesCountX = texturesCountX;
         this.texturesCountY = texturesCountY;
+    }
+    
+    public boolean getLightsEnabled() {
+        return this.lightsEnabled;
+    }
+    public void setLightsEnabled(boolean lights) {
+        this.lightsEnabled = lights;
+    }
+
+    byte getSunlightLevel() {
+        return this.sunlight;
+    }
+    
+    void setSunlightLevel(byte maxSun) {
+        this.sunlight = maxSun; 
     }
 }

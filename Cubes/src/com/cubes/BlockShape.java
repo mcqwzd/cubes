@@ -62,8 +62,53 @@ public abstract class BlockShape{
     protected boolean isFaceAboveSurface(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face) {
         Vector3Int neighborBlock = chunk.getNeighborBlockGlobalLocation(blockLocation, face);
         BlockTerrainControl terrain = chunk.getTerrain();
-        return terrain.getGlobalLocationAboveSurface(neighborBlock);
+        return terrain.getIsGlobalLocationAboveSurface(neighborBlock);
     }
+    
+    protected float getLightLevelOfFace(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face) {
+        BlockTerrainControl terrain = chunk.getTerrain();
+        boolean lightEnabled = terrain.getSettings().getLightsEnabled();
+        if (!lightEnabled) {
+            return 1.0f;
+        }
+        Vector3Int neighborBlock = chunk.getNeighborBlockGlobalLocation(blockLocation, face);
+        byte sunlight = terrain.getSettings().getSunlightLevel();
+        
+        byte lightLevel = terrain.getLightLevelOfBlock(neighborBlock);
+        byte maxLight = terrain.getSettings().getSunlightLevel();
+        if (lightLevel < 0) {
+            return 0;
+        }
+        if (sunlight == 3) {
+            switch (lightLevel) {
+                case 0: return 0.25f;
+                case 1: return 0.5f;
+                case 2: return 0.75f;
+                case 3: return 1f;
+                default: return 1f;
+            }
+        } else if (sunlight == 9) {
+            switch (lightLevel) {
+                 case 0: return 0.1f;
+                 case 1: return 0.15f;
+                 case 2: return 0.2f;
+                 case 3: return 0.25f;
+                 case 4: return 0.3f;
+                 case 5: return 0.4f;
+                 case 6: return 0.5f;
+                 case 7: return 0.6f;
+                 case 8: return 0.8f;
+                 case 9: return 1f;
+                 default: return 1f;
+             }
+        } else {
+            float lightFactor = ((float)lightLevel+1) / ((float)maxLight + 1);
+            return lightFactor;
+        }
+
+
+    }
+
     
     protected abstract boolean canBeMerged(Block.Face face);
     

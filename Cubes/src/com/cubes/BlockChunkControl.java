@@ -15,6 +15,7 @@ import com.jme3.renderer.ViewPort;
 import com.jme3.scene.control.AbstractControl;
 import com.jme3.scene.control.Control;
 import com.cubes.network.*;
+import java.util.HashMap;
 
 /**
  *
@@ -36,16 +37,31 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         node.setLocalTranslation(new Vector3f(blockLocation.getX(), blockLocation.getY(), blockLocation.getZ()).mult(terrain.getSettings().getBlockSize()));
         blockTypes = new byte[cX][cY][cZ];
         blocks_IsOnSurface = new byte[cX][cZ];
+        sunlight = terrain.getSettings().getSunlightLevel();
+        if (terrain.getSettings().getLightsEnabled()) {
+            lightSources = new byte[cX][cY][cZ];
+            lightLevels = new byte[cX][cY][cZ];
+        }
         for( int iX = 0; iX < cX; ++iX) {
             for (int iZ = 0; iZ < cZ; ++iZ) {
                 blocks_IsOnSurface[iX][iZ] = 0;
+            if (terrain.getSettings().getLightsEnabled()) {
+                    for (int iY = 0; iY < cY; ++iY) {
+                        lightSources[iX][iY][iZ] = 0;
+                        lightLevels[iX][iY][iZ] = 0;
+                    }
+                }
             }
         }
+
     }
+    private byte sunlight = 0;
     private BlockTerrainControl terrain;
     private Vector3Int location = new Vector3Int();
     private Vector3Int blockLocation = new Vector3Int();
     private byte[][][] blockTypes;
+    private byte[][][] lightSources;
+    private byte[][][] lightLevels;
     private byte[][] blocks_IsOnSurface;
     private Node node = new Node();
     private Geometry optimizedGeometry_Opaque;
@@ -155,37 +171,52 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
             optimizedGeometry_Transparent.setMaterial(terrain.getSettings().getBlockMaterial());
         }
     }
-    
     private void updateBlockState(Vector3Int location){
-        updateBlockInformation(location);
+        HashMap<String, LightQueueElement> lightsToAdd = new HashMap<String, LightQueueElement> ();
+        HashMap<String, LightQueueElement> lightsToRemove = new HashMap<String, LightQueueElement> ();
+        
+        updateBlockInformation(location, lightsToAdd, lightsToRemove);
         for(int i=0;i<Block.Face.values().length;i++){
             Vector3Int neighborLocation = getNeighborBlockGlobalLocation(location, Block.Face.values()[i]);
             BlockChunkControl chunk = terrain.getChunk(neighborLocation);
-            /*if(chunk == null){
-                Vector3Int neighborGlobalBlock = getNeighborBlockGlobalLocation(blockLocation, Block.Face.values()[i]);
-                chunk = getTerrain().getChunk(neighborGlobalBlock);
-                if (chunk != null) {
-                    System.out.println("Found chunk at " + blockLocation);
-                } else {
-                    System.out.println("Did not find chunk at " + blockLocation);
-                }
-            }*/
             if(chunk != null){
-                chunk.updateBlockInformation(neighborLocation.subtract(chunk.getBlockLocation()));
+                chunk.updateBlockInformation(neighborLocation.subtract(chunk.getBlockLocation()), lightsToAdd, lightsToRemove);
                 chunk.needsMeshUpdate = true;
             }
         }
+        terrain.removeLightSource(lightsToRemove);
+        terrain.addLightSource(lightsToAdd);
     }
-        
-    private void updateBlockInformation(Vector3Int location){
+    private void updateBlockInformation(Vector3Int location, HashMap<String, LightQueueElement> lightsToAdd, HashMap<String, LightQueueElement> lightsToRemove){
     //    Block neighborBlock_Top = terrain.getBlock(getNeighborBlockGlobalLocation(location, Block.Face.Top));
     //    if blocks_IsOnSurface[location.getX()][location.getZ()] = (neighborBlock_Top == null);
         Block block = getBlock(location);
         // If the block is set
         if (block != null) {
+           
+            if (terrain.getSettings().getLightsEnabled()) {
+                lightsToRemove.put(BlockTerrainControl.keyify(terrain.getGlobalBlockLocation(location, this)), new LightQueueElement(location, this));
+            }                    
+           
             // if the block is higher up than the surface block
             if (location.getY() > blocks_IsOnSurface[location.getX()][location.getZ()]) {
+ 
                 // then it is the new surface block
+                if (terrain.getSettings().getLightsEnabled()) {
+                    int searchY = location.getY() + 1;
+                    for (; searchY < terrain.getSettings().getChunkSizeY(); ++searchY) {
+                        Vector3Int searchLoc = new Vector3Int(location.getX(), searchY, location.getZ());
+                        if (lightSources[location.getX()][searchY][location.getZ()] > 0) {
+                            break;
+                        }
+                        lightsToAdd.put(terrain.keyify(terrain.getGlobalBlockLocation(searchLoc, this)), new LightQueueElement(searchLoc, this, sunlight));
+                    }
+                    searchY = location.getY();
+                    for (; searchY > blocks_IsOnSurface[location.getX()][location.getZ()]; --searchY) {
+                        Vector3Int searchLoc = new Vector3Int(location.getX(), searchY, location.getZ());
+                        lightsToRemove.put(terrain.keyify(terrain.getGlobalBlockLocation(searchLoc, this)), new LightQueueElement(searchLoc, this));
+                    }
+                }
                 blocks_IsOnSurface[location.getX()][location.getZ()] = (byte)location.getY();
             }
         }
@@ -196,15 +227,39 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
                 // then find the next block down to be surface
                 int searchY = location.getY();
                 for (; searchY > 0; --searchY) {
-                    block = getBlock(new Vector3Int(location.getX(), searchY, location.getZ()));
+                    Vector3Int searchLoc = new Vector3Int(location.getX(), searchY, location.getZ());
+                    block = getBlock(searchLoc);
                     if (block != null) {
                         blocks_IsOnSurface[location.getX()][location.getZ()] = (byte)searchY;
                         break;
-                    }                
+                    } else {
+                        if (terrain.getSettings().getLightsEnabled()) {
+                            lightsToAdd.put(terrain.keyify(terrain.getGlobalBlockLocation(searchLoc, this)), new LightQueueElement(searchLoc, this, sunlight));
+                        }
+                    }
                 }
                 if (0 == searchY) {
                     blocks_IsOnSurface[location.getX()][location.getZ()] = 0;    
                 }    
+            } else if (location.getY() >= blocks_IsOnSurface[location.getX()][location.getZ()]) {
+                if (terrain.getSettings().getLightsEnabled()) {
+                    lightsToAdd.put(terrain.keyify(terrain.getGlobalBlockLocation(location, this)), new LightQueueElement(location, this, sunlight));
+                }
+            } else {
+                if (terrain.getSettings().getLightsEnabled()) {
+                    byte brightestLight = 0;
+                    if (lightLevels[location.getX()][location.getY()][location.getZ()] == 0) {
+                        for(int i=0;i<Block.Face.values().length;i++){
+                            Vector3Int neighborLocation = BlockNavigator.getNeighborBlockLocalLocation(location, Block.Face.values()[i]);
+                            neighborLocation = terrain.getGlobalBlockLocation(neighborLocation, this);
+                            byte neighborLight = terrain.getLightLevelOfBlock(neighborLocation);
+                            brightestLight = (byte)Math.max((int)neighborLight, (int)brightestLight);
+                        }
+                        if ( brightestLight > 1 ) {
+                            lightsToAdd.put(terrain.keyify(terrain.getGlobalBlockLocation(location, this)), new LightQueueElement(location, this, (byte)(brightestLight - 1), false));
+                        }
+                    }
+                }
             }
         }
     }
@@ -275,14 +330,18 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
             }
         }
         Vector3Int tmpLocation = new Vector3Int();
+        HashMap<String, LightQueueElement> lightsToAdd = new HashMap<String, LightQueueElement> ();
+        HashMap<String, LightQueueElement> lightsToRemove = new HashMap<String, LightQueueElement> ();
         for(int x=0;x<blockTypes.length;x++){
             for(int y=0;y<blockTypes[0].length;y++){
                 for(int z=0;z<blockTypes[0][0].length;z++){
                     tmpLocation.set(x, y, z);
-                    updateBlockInformation(tmpLocation);
+                    updateBlockInformation(tmpLocation, lightsToAdd, lightsToRemove);
                 }
             }
         }
+        terrain.removeLightSource(lightsToRemove);
+        terrain.addLightSource(lightsToAdd);
         needsMeshUpdate = true;
     }
      public void read(int slice, BitInputStream inputStream) throws IOException{
@@ -291,13 +350,17 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
                 blockTypes[x][slice][z] = (byte) inputStream.readBits(8);
             }
         }
+        HashMap<String, LightQueueElement> lightsToAdd = new HashMap<String, LightQueueElement> ();
+        HashMap<String, LightQueueElement> lightsToRemove = new HashMap<String, LightQueueElement> ();
         Vector3Int tmpLocation = new Vector3Int();
         for(int x=0;x<blockTypes.length;x++){
             for(int z=0;z<blockTypes[0][0].length;z++){
                 tmpLocation.set(x, slice, z);
-                updateBlockInformation(tmpLocation);
+                updateBlockInformation(tmpLocation, lightsToAdd, lightsToRemove);
             }
         }
+        terrain.removeLightSource(lightsToRemove);
+        terrain.addLightSource(lightsToAdd);
         needsMeshUpdate = true;
     }
     
@@ -307,4 +370,58 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         int chunksCountZ = (int) Math.ceil(((float) blocksCount.getZ()) / terrain.getSettings().getChunkSizeZ());
         return new Vector3Int(chunksCountX, chunksCountY, chunksCountZ);
     }
+
+    boolean addLightSource(Vector3Int localBlockLocation, byte brightness) {
+        if (brightness == 0 || lightSources[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] < brightness) {
+            lightSources[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] = brightness;
+            if (brightness == 0) {
+                lightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] = 0;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    boolean propigateLight(Vector3Int localBlockLocation, byte brightness) {
+        if (brightness < 0) {
+            return false;
+        }
+        if (getBlock(localBlockLocation) != null) {
+            lightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] = 0;
+            needsMeshUpdate = true;
+            return false;
+        }
+        byte oldLightLevel = lightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()];
+        if (oldLightLevel < brightness) {
+            lightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] = brightness;
+            needsMeshUpdate = true;
+            return true;
+        }
+        return false;
+    }
+
+    boolean propigateDark(Vector3Int localBlockLocation, byte oldLight) {
+        if (lightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] == 0) {
+            return false;
+        }
+        if (lightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] <= oldLight) {
+            lightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] = 0;
+            needsMeshUpdate = true;
+            return true;
+        }
+        return false;
+    }
+
+    byte getLightSourceAt(Vector3Int localBlockLocation) {
+        if (localBlockLocation.getX() > 15 || localBlockLocation.getZ() > 15) {
+            System.out.println("out of bounds");
+            return 0;
+        }
+        return lightSources[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()];
+    }    
+
+    byte getLightAt(Vector3Int localBlockLocation) {
+        return lightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()];
+    }
+
 }
