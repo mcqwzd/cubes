@@ -34,7 +34,7 @@ public class BlockModel{
         Spatial spatial = blockTerrain.getSettings().getAssetManager().loadModel(modelPath);
         Vector3f bounds = getBounds(spatial);
         Vector3f relativeBlockSize = new Vector3f((bounds.getX() / size.getX()), (bounds.getY() / size.getY()), (bounds.getZ() / size.getZ()));
-        Geometry testBlockBox = new Geometry("", new Box(relativeBlockSize.divide(2), relativeBlockSize.getX(), relativeBlockSize.getY(), relativeBlockSize.getZ()));
+        Geometry testBlockBox = new Geometry("addToBlockTErran", new Box(relativeBlockSize.divide(2), relativeBlockSize.getX(), relativeBlockSize.getY(), relativeBlockSize.getZ()));
         Vector3Int tmpLocation = new Vector3Int();
         for(int x=0;x<size.getX();x++){
             for(int y=0;y<size.getY();y++){

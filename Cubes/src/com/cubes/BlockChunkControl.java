@@ -63,7 +63,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
     private byte[][][] lightSources;
     private byte[][][] lightLevels;
     private byte[][] blocks_IsOnSurface;
-    private Node node = new Node();
+    private Node node = new Node("Cube Chunk");
     private Geometry optimizedGeometry_Opaque;
     private Geometry optimizedGeometry_Transparent;
     private boolean needsMeshUpdate;
@@ -144,13 +144,13 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
     public boolean updateSpatial(){
         if(needsMeshUpdate){
             if(optimizedGeometry_Opaque == null){
-                optimizedGeometry_Opaque = new Geometry("");
+                optimizedGeometry_Opaque = new Geometry("Cube optimized_opaque");
                 optimizedGeometry_Opaque.setQueueBucket(Bucket.Opaque);
                 node.attachChild(optimizedGeometry_Opaque);
                 updateBlockMaterial();
             }
             if(optimizedGeometry_Transparent == null){
-                optimizedGeometry_Transparent = new Geometry("");
+                optimizedGeometry_Transparent = new Geometry("Cube optimized_transparent");
                 optimizedGeometry_Transparent.setQueueBucket(Bucket.Transparent);
                 node.attachChild(optimizedGeometry_Transparent);
                 updateBlockMaterial();
