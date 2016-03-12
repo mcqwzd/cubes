@@ -723,29 +723,54 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
             // TODO: multiply the normals together?
             this.addFace(edge1A, edge2A, edge3A,
             normalEdge1SideB,edge1FaceA,chunk, block,blockLocation);
-        }  else {
-            if (edge1Value > 0) {
-                addSharpCornerFaces(edge1A, edge1Peek, edge1C, pointCorner,
-                                    r1A, r1B, normalEdge1SideA, normalEdge1SideB, edge1FaceA, edge1FaceB, chunk, block, blockLocation);
-            } else {
-                this.addFace(edge1A, pointCorner, edge1C,
-                normalEdge1SideB,edge1FaceA,chunk, block,blockLocation);
-            }
-
-            if (edge2Value > 0) {
-                addSharpCornerFaces(edge2A, edge2Peek, edge2C, pointCorner,
-                                   r2A, r2B, normalEdge2SideA, normalEdge2SideB, edge2FaceA, edge2FaceB, chunk, block, blockLocation);
-            } else {
-                this.addFace(edge2A, pointCorner, edge2C,
-                normalEdge2SideB,edge2FaceA,chunk, block,blockLocation);
-            }
+        } else {
             
+            int sharpEdgeCount = 0;
+            if (edge1Value > 0) {
+                sharpEdgeCount++;
+            }
+            if (edge2Value > 0) {
+                sharpEdgeCount++;
+            }
             if (edge3Value > 0) {
-                addSharpCornerFaces(edge3A, edge3Peek, edge3C, pointCorner,
-                                   r3A, r3B, normalEdge3SideA, normalEdge3SideB, edge3FaceA, edge3FaceB, chunk, block, blockLocation);
+                sharpEdgeCount++;
+            }
+            if (sharpEdgeCount == 2 && cornerValue <= 2) {
+              if (edge1Value == 0) {
+                    this.addFace(edge2C, edge2Peek, edge3A, edge3Peek,
+                    normalEdge1SideB,edge1FaceA,chunk, block,blockLocation);
+              } else if (edge2Value == 0) {
+                    this.addFace(edge3C, edge3Peek, edge1A, edge1Peek,
+                    normalEdge2SideB,edge2FaceA,chunk, block,blockLocation);
+              } else if (edge3Value == 0) {
+                    this.addFace(edge1C, edge1Peek, edge2A, edge2Peek,
+                    normalEdge3SideB,edge3FaceA,chunk, block,blockLocation);
+              }
+                
             } else {
-                this.addFace(edge3A, pointCorner, edge3C,
-                normalEdge3SideB,edge3FaceA,chunk, block,blockLocation);
+                if (edge1Value > 0) {
+                    addSharpCornerFaces(edge1A, edge1Peek, edge1C, pointCorner,
+                                        r1A, r1B, normalEdge1SideA, normalEdge1SideB, edge1FaceA, edge1FaceB, chunk, block, blockLocation);
+                } else {
+                    this.addFace(edge1A, pointCorner, edge1C,
+                    normalEdge1SideB,edge1FaceA,chunk, block,blockLocation);
+                }
+
+                if (edge2Value > 0) {
+                    addSharpCornerFaces(edge2A, edge2Peek, edge2C, pointCorner,
+                                       r2A, r2B, normalEdge2SideA, normalEdge2SideB, edge2FaceA, edge2FaceB, chunk, block, blockLocation);
+                } else {
+                    this.addFace(edge2A, pointCorner, edge2C,
+                    normalEdge2SideB,edge2FaceA,chunk, block,blockLocation);
+                }
+            
+                if (edge3Value > 0) {
+                    addSharpCornerFaces(edge3A, edge3Peek, edge3C, pointCorner,
+                                       r3A, r3B, normalEdge3SideA, normalEdge3SideB, edge3FaceA, edge3FaceB, chunk, block, blockLocation);
+                } else {
+                    this.addFace(edge3A, pointCorner, edge3C,
+                    normalEdge3SideB,edge3FaceA,chunk, block,blockLocation);
+                }
             }
         }
 //        } else if (edge1Value > 0 &&  edge2Value > 0 && edge3Value > 0) {

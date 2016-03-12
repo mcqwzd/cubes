@@ -29,15 +29,20 @@ public class TestTutorial extends SimpleApplication{
         
         //This is your terrain, it contains the whole
         //block world and offers methods to modify it
-        BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int(1, 1, 1));
+        BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int(3, 3, 3));
 
         //To set a block, just specify the location and the block object
         //(Existing blocks will be replaced)
+        blockTerrain.setBlock(new Vector3Int(1, 3, 1), CubesTestAssets.BLOCK_WOOD);
+        blockTerrain.setBlock(new Vector3Int(1, 2, 1), CubesTestAssets.BLOCK_WOOD);
+        blockTerrain.setBlock(new Vector3Int(1, 1, 1), CubesTestAssets.BLOCK_WOOD);
         blockTerrain.setBlock(new Vector3Int(1, 0, 1), CubesTestAssets.BLOCK_WOOD);
         blockTerrain.setBlock(new Vector3Int(0, 0, 1), CubesTestAssets.BLOCK_WOOD);
         blockTerrain.setBlock(new Vector3Int(1, 0, 0), CubesTestAssets.BLOCK_WOOD);
         blockTerrain.setBlock(new Vector3Int(1, 0, 2), CubesTestAssets.BLOCK_WOOD);
         blockTerrain.setBlock(new Vector3Int(2, 0, 1), CubesTestAssets.BLOCK_WOOD);
+        blockTerrain.setBlock(new Vector3Int(1, 0, 3), CubesTestAssets.BLOCK_WOOD);
+        blockTerrain.setBlock(new Vector3Int(3, 0, 1), CubesTestAssets.BLOCK_WOOD);
 //        blockTerrain.setBlock(new Vector3Int(1, 0, 1), CubesTestAssets.BLOCK_STONE);
 //        blockTerrain.setBlock(0, 0, 0, CubesTestAssets.BLOCK_GRASS); //For the lazy users :P
 
