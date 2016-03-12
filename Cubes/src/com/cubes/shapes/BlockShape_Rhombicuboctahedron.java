@@ -19,7 +19,8 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
     
     public BlockShape_Rhombicuboctahedron(){
         this.extents = new float[]{0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f};
-        this.inset = new float[]{0.17f, 0.17f, 0.17f, 0.17f, 0.17f, 0.17f};
+        //this.inset = new float[]{0.3333f, 0.3333f, 0.3333f, 0.3333f, 0.3333f, 0.3333f};
+        this.inset = new float[]{0.25f, 0.25f, 0.25f, 0.25f, 0.25f, 0.25f, 0.25f};
     }
 
 
@@ -312,7 +313,7 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
         }
         if (rTopFrontRight != NeighborRelation.empty) {
             value = (rTopFrontRight == NeighborRelation.different) ? 2 : 1; 
-            topBackRightCorner += value;
+            topFrontRightCorner += value;
         }
         if (rBottomBackLeft != NeighborRelation.empty) {
             value = (rBottomBackLeft == NeighborRelation.different) ? 2 : 1; 
@@ -588,56 +589,74 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
         //    this.addFace(pointGrid[left][midBottom][midBack], pointGrid[midLeft][midBottom][back], pointGrid[midLeft][bottom][midBack],
         //                 normalBottom, Block.Face.Bottom,chunk, block,blockLocation);
         //} else if (bottomBackLeftCorner == 1) {
-            this.addCorner(bottomBackLeftCorner, pointGrid[left][bottom][back],
-                      rBack, rLeft, backLeftEdge, normalBack, normalLeft, Block.Face.Left,  pointGrid[midLeft][midBottom][back], pointGrid[left][midBottom][back],pointGrid[left][midBottom][midBack], 
-                      rBottom, rBack, bottomBackEdge, normalBottom, normalBack,Block.Face.Back,  pointGrid[midLeft][bottom][midBack], pointGrid[midLeft][bottom][back], pointGrid[midLeft][midBottom][back],
-                      rBottom, rLeft, bottomLeftEdge, normalBottom,  normalLeft, Block.Face.Bottom, pointGrid[left][midBottom][midBack], pointGrid[left][bottom][midBack], pointGrid[midLeft][bottom][midBack],
-                      chunk, block, blockLocation);
+        this.addCorner(bottomBackLeftCorner, pointGrid[left][bottom][back],
+                  rBack, rLeft, backLeftEdge, normalBack, normalLeft, Block.Face.Back,Block.Face.Left,
+                  pointGrid[midLeft][midBottom][back], pointGrid[left][midBottom][back],pointGrid[left][midBottom][midBack], 
+                  rBottom, rBack, bottomBackEdge, normalBottom, normalBack,Block.Face.Bottom,Block.Face.Back,
+                  pointGrid[midLeft][bottom][midBack], pointGrid[midLeft][bottom][back], pointGrid[midLeft][midBottom][back],
+                  rLeft, rBottom,  bottomLeftEdge, normalLeft, normalBottom, Block.Face.Left, Block.Face.Bottom,
+                  pointGrid[left][midBottom][midBack], pointGrid[left][bottom][midBack], pointGrid[midLeft][bottom][midBack],
+                  chunk, block, blockLocation);
          //}
         //if (bottomBackRightCorner == 0) {
             //this.addFace(pointGrid[right][midBottom][midBack],pointGrid[midRight][bottom][midBack], pointGrid[midRight][midBottom][back], 
             //             normalBottom, Block.Face.Bottom,chunk, block,blockLocation);
-            this.addCorner(bottomBackRightCorner, pointGrid[right][bottom][back],
-                      rBottom, rRight, bottomRightEdge, normalBottom,  normalRight, Block.Face.Bottom, pointGrid[right][midBottom][midBack], pointGrid[right][bottom][midBack], pointGrid[right][midBottom][midBack],
-                      rBottom, rBack, bottomBackEdge, normalBottom, normalBack,Block.Face.Back,  pointGrid[midRight][bottom][midBack], pointGrid[midRight][bottom][back], pointGrid[midRight][bottom][back],
-                      rBack, rRight, backRightEdge, normalBack, normalRight, Block.Face.Right, pointGrid[midRight][midBottom][back], pointGrid[right][midBottom][midBack], pointGrid[right][midBottom][back],
+        this.addCorner(bottomBackRightCorner, pointGrid[right][bottom][back],
+                      rBottom, rRight, bottomRightEdge, normalBottom,  normalRight, Block.Face.Bottom, Block.Face.Right,
+                      pointGrid[midRight][bottom][midBack], pointGrid[right][bottom][midBack], pointGrid[right][midBottom][midBack],
+                      rBack, rBottom, bottomBackEdge, normalBack, normalBottom, Block.Face.Back,Block.Face.Bottom,
+                      pointGrid[midRight][midBottom][back], pointGrid[midRight][bottom][back], pointGrid[midRight][bottom][midBack],  
+                      rRight, rBack, backRightEdge, normalRight, normalBack, Block.Face.Right, Block.Face.Back,
+                      pointGrid[right][midBottom][midBack], pointGrid[right][midBottom][back], pointGrid[midRight][midBottom][back],
                       chunk, block, blockLocation);
         //}
         //if (bottomFrontLeftCorner == 0) {
         //    this.addFace(pointGrid[left][midBottom][midFront], pointGrid[midLeft][bottom][midFront], pointGrid[midLeft][midBottom][front],
         //                 normalBottom, Block.Face.Bottom,chunk, block,blockLocation);
-            this.addCorner(bottomFrontLeftCorner, pointGrid[left][bottom][front],
-                      rBottom, rLeft, bottomLeftEdge, normalBottom,  normalLeft, Block.Face.Bottom, pointGrid[left][midBottom][midFront], pointGrid[left][bottom][midFront], pointGrid[left][midBottom][midFront],
-                      rBottom, rFront, bottomFrontEdge, normalBottom, normalFront,Block.Face.Front,  pointGrid[midLeft][bottom][midFront], pointGrid[midLeft][bottom][front], pointGrid[midLeft][bottom][front],
-                      rFront, rLeft, frontLeftEdge, normalFront, normalLeft, Block.Face.Left, pointGrid[midLeft][midBottom][front], pointGrid[left][midBottom][midFront], pointGrid[left][midBottom][front],
-                      chunk, block, blockLocation);
+           this.addCorner(bottomFrontLeftCorner, pointGrid[left][bottom][front],
+                rBottom, rLeft, bottomLeftEdge, normalBottom,  normalLeft, Block.Face.Bottom, Block.Face.Left,
+                pointGrid[midLeft][bottom][midFront], pointGrid[left][bottom][midFront], pointGrid[left][midBottom][midFront],
+                rFront, rBottom, bottomFrontEdge, normalFront, normalBottom, Block.Face.Front,  Block.Face.Bottom,
+                pointGrid[midLeft][midBottom][front], pointGrid[midLeft][bottom][front], pointGrid[midLeft][bottom][midFront],
+                rLeft, rFront, frontLeftEdge, normalLeft, normalFront, Block.Face.Left, Block.Face.Front,
+                pointGrid[left][midBottom][midFront], pointGrid[left][midBottom][front], pointGrid[midLeft][midBottom][front], 
+                chunk, block, blockLocation);
         //}
         //if (bottomFrontRightCorner == 0) {
         //    this.addFace(pointGrid[right][midBottom][midFront], pointGrid[midRight][midBottom][front], pointGrid[midRight][bottom][midFront],
         //                 normalBottom, Block.Face.Bottom,chunk, block,blockLocation);
             this.addCorner(bottomFrontRightCorner, pointGrid[right][bottom][front],
-                      rFront, rRight, frontRightEdge, normalFront, normalRight, Block.Face.Right, pointGrid[midRight][midBottom][front], pointGrid[right][midBottom][front], pointGrid[right][midBottom][midFront],
-                      rBottom, rFront, bottomFrontEdge, normalBottom, normalFront,Block.Face.Front,  pointGrid[midRight][bottom][midFront], pointGrid[midRight][bottom][front], pointGrid[midRight][midBottom][front],
-                      rBottom, rRight, bottomRightEdge, normalBottom,  normalRight, Block.Face.Bottom, pointGrid[right][midBottom][midFront], pointGrid[right][bottom][midFront], pointGrid[midRight][bottom][midFront],
-                      chunk, block, blockLocation);
+                rFront, rRight, frontRightEdge, normalFront, normalRight, Block.Face.Front, Block.Face.Right,
+                pointGrid[midRight][midBottom][front], pointGrid[right][midBottom][front], pointGrid[right][midBottom][midFront],
+                rBottom, rFront, bottomFrontEdge, normalBottom, normalFront,Block.Face.Bottom,Block.Face.Front,
+                pointGrid[midRight][bottom][midFront], pointGrid[midRight][bottom][front], pointGrid[midRight][midBottom][front],
+                rRight, rBottom, bottomRightEdge, normalRight, normalBottom, Block.Face.Right,Block.Face.Bottom,
+                pointGrid[right][midBottom][midFront], pointGrid[right][bottom][midFront], pointGrid[midRight][bottom][midFront],
+                chunk, block, blockLocation);
         //}
         // Corners
         //if (topBackLeftCorner == 0) {
         //    this.addFace(pointGrid[left][midTop][midBack],  pointGrid[midLeft][top][midBack], pointGrid[midLeft][midTop][back],
         //                 normalTop, Block.Face.Top,chunk, block,blockLocation);
-             this.addCorner(topBackLeftCorner, pointGrid[left][top][back],
-                      rTop, rLeft, topLeftEdge, normalTop,  normalLeft, Block.Face.Top, pointGrid[left][midTop][midBack], pointGrid[left][top][midBack], pointGrid[midLeft][top][midBack],
-                      rTop, rBack, topBackEdge, normalTop, normalBack,Block.Face.Back,  pointGrid[midLeft][top][midBack], pointGrid[midLeft][top][back], pointGrid[midLeft][midTop][back],
-                      rBack, rLeft, backLeftEdge, normalBack, normalLeft, Block.Face.Left, pointGrid[midLeft][midTop][back], pointGrid[left][midTop][back], pointGrid[left][midTop][midBack],
+          this.addCorner(topBackLeftCorner, pointGrid[left][top][back],
+                      rTop, rLeft, topLeftEdge, normalTop,  normalLeft, Block.Face.Top, Block.Face.Left,
+                      pointGrid[midLeft][top][midBack], pointGrid[left][top][midBack], pointGrid[left][midTop][midBack],
+                      rBack, rTop, topBackEdge, normalBack, normalTop, Block.Face.Back,  Block.Face.Top,
+                      pointGrid[midLeft][midTop][back], pointGrid[midLeft][top][back], pointGrid[midLeft][top][midBack],
+                      rLeft, rBack, backLeftEdge, normalLeft, normalBack, Block.Face.Left, Block.Face.Back,
+                      pointGrid[left][midTop][midBack],pointGrid[left][midTop][back], pointGrid[midLeft][midTop][back], 
                       chunk, block, blockLocation);
        //}
 //        if (topBackRightCorner == 0) {
 //            this.addFace(pointGrid[right][midTop][midBack],  pointGrid[midRight][midTop][back], pointGrid[midRight][top][midBack],
-//                         normalTop, Block.Face.Top,chunk, block,blockLocation);
+//                         normalTop, Block.Face.Top,chunk, block,blockLocation);*/
           this.addCorner(topBackRightCorner, pointGrid[right][top][back],
-                      rBack, rRight, backRightEdge, normalBack, normalRight, Block.Face.Right, pointGrid[midRight][midTop][back], pointGrid[right][midTop][back], pointGrid[right][midTop][midBack],
-                      rTop, rBack, topBackEdge, normalTop, normalBack,Block.Face.Back,  pointGrid[midRight][top][midBack], pointGrid[midRight][top][back], pointGrid[midRight][midTop][back],
-                      rTop, rRight, topRightEdge, normalTop,  normalRight, Block.Face.Top, pointGrid[right][midTop][midBack], pointGrid[right][top][midBack], pointGrid[midRight][top][midBack],
+                      rBack, rRight, backRightEdge, normalBack, normalRight, Block.Face.Back, Block.Face.Right,
+                      pointGrid[midRight][midTop][back], pointGrid[right][midTop][back], pointGrid[right][midTop][midBack],
+                      rTop, rBack, topBackEdge, normalTop, normalBack,Block.Face.Top,  Block.Face.Back,
+                      pointGrid[midRight][top][midBack], pointGrid[midRight][top][back], pointGrid[midRight][midTop][back],
+                      rRight, rTop, topRightEdge, normalRight,  normalTop, Block.Face.Right,Block.Face.Top,
+                      pointGrid[right][midTop][midBack], pointGrid[right][top][midBack], pointGrid[midRight][top][midBack],
                       chunk, block, blockLocation);
   //        }
         // Corners
@@ -645,18 +664,24 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
 //            this.addFace(pointGrid[left][midTop][midFront], pointGrid[midLeft][midTop][front], pointGrid[midLeft][top][midFront], 
 //                         normalTop, Block.Face.Top,chunk, block,blockLocation);
            this.addCorner(topFrontLeftCorner, pointGrid[left][top][front],
-                      rFront, rLeft, frontLeftEdge, normalFront, normalLeft, Block.Face.Left, pointGrid[midLeft][midTop][front], pointGrid[left][midTop][midFront], pointGrid[left][midTop][front],
-                      rTop, rFront, topFrontEdge, normalTop, normalFront,Block.Face.Front,  pointGrid[midLeft][top][midFront], pointGrid[midLeft][top][front], pointGrid[midLeft][top][front],
-                      rLeft, rTop, topLeftEdge, normalTop,  normalLeft, Block.Face.Top, pointGrid[left][midTop][midFront], pointGrid[left][top][midFront], pointGrid[left][midTop][midFront],
+                      rFront, rLeft, frontLeftEdge, normalFront, normalLeft, Block.Face.Front, Block.Face.Left,
+                      pointGrid[midLeft][midTop][front], pointGrid[left][midTop][front], pointGrid[left][midTop][midFront], 
+                      rTop, rFront,  topFrontEdge, normalTop, normalFront,Block.Face.Top, Block.Face.Front,
+                      pointGrid[midLeft][top][midFront], pointGrid[midLeft][top][front], pointGrid[midLeft][midTop][front],
+                      rLeft, rTop,  topLeftEdge, normalLeft, normalTop, Block.Face.Left, Block.Face.Top,
+                      pointGrid[left][midTop][midFront], pointGrid[left][top][midFront], pointGrid[midLeft][top][midFront],
                       chunk, block, blockLocation);
   //        }
 //        if (topFrontRightCorner == 0) {
 //            this.addFace(pointGrid[right][midTop][midFront], pointGrid[midRight][top][midFront],pointGrid[midRight][midTop][front],
 //                         normalTop, Block.Face.Top,chunk, block,blockLocation);
-            this.addCorner(topFrontRightCorner, pointGrid[right][top][front],
-                      rRight, rTop, topRightEdge, normalTop,  normalRight, Block.Face.Top, pointGrid[right][midTop][midFront], pointGrid[right][top][midFront], pointGrid[midRight][top][midFront],
-                      rTop, rFront, topFrontEdge, normalTop, normalFront,Block.Face.Front,  pointGrid[midRight][top][midFront], pointGrid[midRight][top][front], pointGrid[midRight][midTop][front],
-                      rFront, rRight, frontRightEdge, normalFront, normalRight, Block.Face.Right, pointGrid[midRight][midTop][front], pointGrid[right][midTop][front], pointGrid[right][midTop][midFront],
+           this.addCorner(topFrontRightCorner, pointGrid[right][top][front],
+                      rTop, rRight, topRightEdge, normalTop,  normalRight, Block.Face.Top,Block.Face.Right,
+                      pointGrid[midRight][top][midFront], pointGrid[right][top][midFront], pointGrid[right][midTop][midFront], 
+                      rFront, rTop, topFrontEdge, normalFront, normalTop, Block.Face.Front, Block.Face.Top,
+                      pointGrid[midRight][midTop][front], pointGrid[midRight][top][front], pointGrid[midRight][top][midFront], 
+                      rRight, rFront, frontRightEdge, normalRight, normalFront, Block.Face.Right,Block.Face.Front,
+                       pointGrid[right][midTop][midFront],pointGrid[right][midTop][front], pointGrid[midRight][midTop][front], 
                       chunk, block, blockLocation);
 //        }
         /*int topBackEdge = getJoinStrength(chunk, blockLocation, Block.Face.Top, Block.Face.Back);
@@ -678,35 +703,54 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
                                      NeighborRelation rA, NeighborRelation rB, Vector3f normalA, Vector3f normalB, Block.Face faceA, Block.Face faceB,
                                      BlockChunkControl chunk, Block block, Vector3Int blockLocation) {
         if (rA == NeighborRelation.empty) {
-            this.addFace(edgePeek, pointCorner, edgeA,
+            this.addFace(edgeA, pointCorner, edgePeek,
             normalA,faceA,chunk, block,blockLocation);
         }
         if (rB == NeighborRelation.empty) {
-            this.addFace(edgeC, pointCorner, edgePeek,
+            this.addFace(edgePeek, pointCorner, edgeC,
             normalB,faceB,chunk, block,blockLocation);
         }
     }
     private void addCorner(int cornerValue, Vector3f pointCorner, 
-                           NeighborRelation r1A, NeighborRelation r1B, int edge1Value, Vector3f normalEdge1SideA, Vector3f normalEdge1SideB, Block.Face edge1FaceA, 
+                           NeighborRelation r1A, NeighborRelation r1B, int edge1Value, Vector3f normalEdge1SideA, Vector3f normalEdge1SideB, Block.Face edge1FaceA, Block.Face edge1FaceB, 
                            Vector3f edge1A, Vector3f edge1Peek, Vector3f edge1C, 
-                           NeighborRelation r2A, NeighborRelation r2B,int edge2Value, Vector3f normalEdge2SideA, Vector3f normalEdge2SideB, Block.Face edge2FaceA, 
+                           NeighborRelation r2A, NeighborRelation r2B,int edge2Value, Vector3f normalEdge2SideA, Vector3f normalEdge2SideB, Block.Face edge2FaceA, Block.Face edge2FaceB,
                            Vector3f edge2A, Vector3f edge2Peek, Vector3f edge2C, 
-                           NeighborRelation r3A, NeighborRelation r3B,int edge3Value, Vector3f normalEdge3SideA, Vector3f normalEdge3SideB, Block.Face edge3FaceA, 
+                           NeighborRelation r3A, NeighborRelation r3B,int edge3Value, Vector3f normalEdge3SideA, Vector3f normalEdge3SideB, Block.Face edge3FaceA, Block.Face edge3FaceB,
                            Vector3f edge3A, Vector3f edge3Peek, Vector3f edge3C, 
                           BlockChunkControl chunk, Block block, Vector3Int blockLocation) {
         if (cornerValue == 0 ) {
             // TODO: multiply the normals together?
             this.addFace(edge1A, edge2A, edge3A,
             normalEdge1SideB,edge1FaceA,chunk, block,blockLocation);
-        } else if (edge1Value > 0 &&  edge2Value > 0 && edge3Value > 0) {
+        }  else {
+            if (edge1Value > 0) {
+                addSharpCornerFaces(edge1A, edge1Peek, edge1C, pointCorner,
+                                    r1A, r1B, normalEdge1SideA, normalEdge1SideB, edge1FaceA, edge1FaceB, chunk, block, blockLocation);
+            } else {
+                this.addFace(edge1A, pointCorner, edge1C,
+                normalEdge1SideB,edge1FaceA,chunk, block,blockLocation);
+            }
+
+            if (edge2Value > 0) {
+                addSharpCornerFaces(edge2A, edge2Peek, edge2C, pointCorner,
+                                   r2A, r2B, normalEdge2SideA, normalEdge2SideB, edge2FaceA, edge2FaceB, chunk, block, blockLocation);
+            } else {
+                this.addFace(edge2A, pointCorner, edge2C,
+                normalEdge2SideB,edge2FaceA,chunk, block,blockLocation);
+            }
+            
+            if (edge3Value > 0) {
+                addSharpCornerFaces(edge3A, edge3Peek, edge3C, pointCorner,
+                                   r3A, r3B, normalEdge3SideA, normalEdge3SideB, edge3FaceA, edge3FaceB, chunk, block, blockLocation);
+            } else {
+                this.addFace(edge3A, pointCorner, edge3C,
+                normalEdge3SideB,edge3FaceA,chunk, block,blockLocation);
+            }
+        }
+//        } else if (edge1Value > 0 &&  edge2Value > 0 && edge3Value > 0) {
             // pointed corner
-            addSharpCornerFaces(edge1A, edge1Peek, edge1C, pointCorner,
-                               r1A, r1B, normalEdge1SideA, normalEdge1SideB, edge1FaceA, edge1FaceA, chunk, block, blockLocation);
-            addSharpCornerFaces(edge2A, edge2Peek, edge2C, pointCorner,
-                               r2A, r2B, normalEdge2SideA, normalEdge2SideB, edge2FaceA, edge2FaceA, chunk, block, blockLocation);
-            addSharpCornerFaces(edge3A, edge3Peek, edge3C, pointCorner,
-                               r3A, r3B, normalEdge3SideA, normalEdge3SideB, edge3FaceA, edge3FaceA, chunk, block, blockLocation);
-        } else if (edge1Value > 1 && edge2Value > 0 && edge3Value > 0) {
+        /*} else if (edge1Value > 1 && edge2Value > 0 && edge3Value > 0) {
 
         } else if (edge1Value > 0 && edge2Value > 1 && edge3Value > 0) {
             
@@ -718,7 +762,7 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
             
         } else if (edge1Value > 1 && edge2Value > 1 && edge3Value > 0) {
             
-        }
+        }*/
     }
 
     private void addSharpEdge(
