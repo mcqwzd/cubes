@@ -34,11 +34,8 @@ public class BlockShape_Cuboid extends BlockShape{
         Vector3f faceLoc_Top_BottomLeft = blockLocation3f.add(new Vector3f((0.5f - extents[2]), (0.5f + extents[0]), (0.5f + extents[4])));
         Vector3f faceLoc_Top_BottomRight = blockLocation3f.add(new Vector3f((0.5f + extents[3]), (0.5f + extents[0]), (0.5f + extents[4])));
         float lightColor = 0f;
-        float aboveLightLevel = 1f;
-        float caveLightLevel = 0.4f;
-
+        
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Top)){
-            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Top) ? aboveLightLevel : caveLightLevel; 
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Top);
             addFaceIndices(indices, positions.size(), lightColor, lightColor, lightColor);
             positions.add(faceLoc_Top_BottomLeft);
@@ -49,7 +46,6 @@ public class BlockShape_Cuboid extends BlockShape{
             addTextureCoordinates(chunk, textureCoordinates, block.getSkin(chunk, blockLocation, Block.Face.Top).getTextureLocation());
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Bottom)){
-            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Bottom) ? aboveLightLevel : caveLightLevel; 
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Bottom);
             addFaceIndices(indices, positions.size(), lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_BottomRight);
@@ -60,7 +56,6 @@ public class BlockShape_Cuboid extends BlockShape{
             addTextureCoordinates(chunk, textureCoordinates, block.getSkin(chunk, blockLocation, Block.Face.Bottom).getTextureLocation());
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Left)){
-            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Left) ? aboveLightLevel : caveLightLevel; 
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Left);
             addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_TopLeft);
@@ -71,7 +66,6 @@ public class BlockShape_Cuboid extends BlockShape{
             addTextureCoordinates(chunk, textureCoordinates, block.getSkin(chunk, blockLocation, Block.Face.Left).getTextureLocation());
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Right)){
-            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Right) ? aboveLightLevel : caveLightLevel; 
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Right);
             addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_BottomRight);
@@ -82,7 +76,6 @@ public class BlockShape_Cuboid extends BlockShape{
             addTextureCoordinates(chunk, textureCoordinates, block.getSkin(chunk, blockLocation, Block.Face.Right).getTextureLocation());
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Front)){
-            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Front) ? aboveLightLevel : caveLightLevel; 
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Front);
             addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_BottomLeft);
@@ -93,7 +86,6 @@ public class BlockShape_Cuboid extends BlockShape{
             addTextureCoordinates(chunk, textureCoordinates,block.getSkin(chunk, blockLocation, Block.Face.Front).getTextureLocation());
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Back)){
-            lightColor = isFaceAboveSurface(chunk, blockLocation, Block.Face.Back) ? aboveLightLevel : caveLightLevel; 
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Back);
             addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_TopRight);
@@ -147,4 +139,10 @@ public class BlockShape_Cuboid extends BlockShape{
         }
         return isAllowed;
     }
+
+    @Override
+    public String getTypeName() {
+        return BlockShape_Cuboid.class.getName();
+    }
+
 }

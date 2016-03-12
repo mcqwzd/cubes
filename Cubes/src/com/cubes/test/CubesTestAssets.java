@@ -59,7 +59,10 @@ public class CubesTestAssets{
         new BlockSkin(new BlockSkin_TextureLocation(3, 0), false),
         new BlockSkin(new BlockSkin_TextureLocation(3, 0), false)
     };
-    public static Block BLOCK_WOOD = new Block(SKINS_WOOD);
+    //public static Block BLOCK_WOOD = new Block(SKINS_WOOD);
+    public static Block BLOCK_WOOD = new Block(SKINS_WOOD){{
+        setShapes(new BlockShape_Rhombicuboctahedron());
+    }};
     public static Block BLOCK_WOOD_FLAT = new Block(SKINS_WOOD){{
         setShapes(new BlockShape_Cuboid(new float[]{0, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f}));
     }};

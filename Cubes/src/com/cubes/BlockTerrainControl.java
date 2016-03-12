@@ -16,6 +16,7 @@ import com.jme3.texture.Texture;
 import com.cubes.network.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -633,7 +634,14 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         chunkLocation = new Vector3Int(chunkX, chunkY, chunkZ);
         initializeChunk(chunkLocation);
         BlockChunkControl chunk = chunks.get(keyify(chunkLocation));
+        long startTime = Calendar.getInstance().getTimeInMillis();
+        long endTime;
+        
         chunk.read(chunkSlice, inputStream);
+        endTime = Calendar.getInstance().getTimeInMillis();
+        if (endTime - startTime > 2) {
+            System.err.println("chunk read took " + (endTime - startTime) + "ms");
+        }
     }
     
     public void readChunkPartial(byte data[]) {

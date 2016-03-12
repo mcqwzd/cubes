@@ -15,7 +15,35 @@ import com.jme3.terrain.Terrain;
  * @author Carl
  */
 public abstract class BlockShape{
-    
+    protected enum NeighborRelation {
+        empty,
+        different,
+        identical
+    }
+    protected NeighborRelation getNeighborRelation(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face1) {
+        return getNeighborRelation(chunk, BlockNavigator.getNeighborBlockLocalLocation(blockLocation, face1));
+    }
+    protected NeighborRelation getNeighborRelation(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face1, Block.Face face2) {
+        return getNeighborRelation(chunk, BlockNavigator.getNeighborBlockLocalLocation(blockLocation, face2), face1);
+    }
+    protected NeighborRelation getNeighborRelation(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face1, Block.Face face2, Block.Face face3) {
+       return getNeighborRelation(chunk, BlockNavigator.getNeighborBlockLocalLocation(blockLocation, face3), face1, face2);
+    }
+    protected NeighborRelation getNeighborRelation(BlockChunkControl chunk, Vector3Int blockLocation) {
+         Block neighborBlock = chunk.getBlock(blockLocation);
+        if (neighborBlock == null) {
+            Vector3Int neighborGlobalBlock = chunk.getBlockGlobalLocation(blockLocation);
+            neighborBlock = chunk.getTerrain().getBlock(neighborGlobalBlock);
+        }
+        if(neighborBlock == null) {
+            return NeighborRelation.empty;
+        }
+        if (neighborBlock.getClass().equals(this.getClass())) {
+            return NeighborRelation.identical;
+        }
+        return NeighborRelation.different;
+    }
+
     private boolean isTransparent;
     protected List<Vector3f> positions;
     protected List<Short> indices;
@@ -31,7 +59,7 @@ public abstract class BlockShape{
         this.lightColors = lightColors;
         this.isTransparent = isTransparent;
     }
-    
+    public abstract String getTypeName();
     public abstract void addTo(BlockChunkControl chunk, Vector3Int blockLocation);
     
     protected boolean shouldFaceBeAdded(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face){
@@ -45,6 +73,9 @@ public abstract class BlockShape{
                 neighborBlock = chunk.getTerrain().getBlock(neighborGlobalBlock);
             }
             if(neighborBlock != null){
+//                if (!neighborBlock.getClass().equals(this.getClass())) {
+//                    return true;
+//                }
                 BlockSkin neighborBlockSkin = neighborBlock.getSkin(chunk, blockLocation, face);
                 if(blockSkin.isTransparent() != neighborBlockSkin.isTransparent()){
                     return true;

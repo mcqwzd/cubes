@@ -15,6 +15,7 @@ import com.jme3.renderer.ViewPort;
 import com.jme3.scene.control.AbstractControl;
 import com.jme3.scene.control.Control;
 import com.cubes.network.*;
+import java.util.Calendar;
 import java.util.HashMap;
 
 /**
@@ -108,6 +109,11 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
     
     public Vector3Int getNeighborBlockGlobalLocation(Vector3Int location, Block.Face face){
         Vector3Int neighborLocation = BlockNavigator.getNeighborBlockLocalLocation(location, face);
+        neighborLocation.addLocal(blockLocation);
+        return neighborLocation;
+    }
+    public Vector3Int getBlockGlobalLocation(Vector3Int location){
+        Vector3Int neighborLocation = location.clone();
         neighborLocation.addLocal(blockLocation);
         return neighborLocation;
     }
@@ -353,14 +359,31 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         HashMap<String, LightQueueElement> lightsToAdd = new HashMap<String, LightQueueElement> ();
         HashMap<String, LightQueueElement> lightsToRemove = new HashMap<String, LightQueueElement> ();
         Vector3Int tmpLocation = new Vector3Int();
+        long startTime = Calendar.getInstance().getTimeInMillis();
+        long endTime;
+        
         for(int x=0;x<blockTypes.length;x++){
             for(int z=0;z<blockTypes[0][0].length;z++){
                 tmpLocation.set(x, slice, z);
                 updateBlockInformation(tmpLocation, lightsToAdd, lightsToRemove);
             }
         }
+        endTime = Calendar.getInstance().getTimeInMillis();
+        if (endTime - startTime > 2) {
+            System.err.println("update block info took " + (endTime - startTime) + "ms");
+        }
+        startTime = Calendar.getInstance().getTimeInMillis();
         terrain.removeLightSource(lightsToRemove);
+        endTime = Calendar.getInstance().getTimeInMillis();
+        if (endTime - startTime > 2) {
+            System.err.println("removing lights took " + (endTime - startTime) + "ms");
+        }
+        startTime = Calendar.getInstance().getTimeInMillis();
         terrain.addLightSource(lightsToAdd);
+        endTime = Calendar.getInstance().getTimeInMillis();
+        if (endTime - startTime > 2) {
+            System.err.println("putting lights took " + (endTime - startTime) + "ms");
+        }
         needsMeshUpdate = true;
     }
     
