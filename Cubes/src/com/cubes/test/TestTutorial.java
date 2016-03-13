@@ -13,6 +13,7 @@ public class TestTutorial extends SimpleApplication{
     public static void main(String[] args){
         Logger.getLogger("").setLevel(Level.SEVERE);
         TestTutorial app = new TestTutorial();
+        app.setShowSettings(false);
         app.start();
     }
 
@@ -33,16 +34,16 @@ public class TestTutorial extends SimpleApplication{
 
         //To set a block, just specify the location and the block object
         //(Existing blocks will be replaced)
-        blockTerrain.setBlock(new Vector3Int(1, 3, 1), CubesTestAssets.BLOCK_WOOD);
-        blockTerrain.setBlock(new Vector3Int(1, 2, 1), CubesTestAssets.BLOCK_WOOD);
-        blockTerrain.setBlock(new Vector3Int(1, 1, 1), CubesTestAssets.BLOCK_WOOD);
-        blockTerrain.setBlock(new Vector3Int(1, 0, 1), CubesTestAssets.BLOCK_WOOD);
-        blockTerrain.setBlock(new Vector3Int(0, 0, 1), CubesTestAssets.BLOCK_WOOD);
-        blockTerrain.setBlock(new Vector3Int(1, 0, 0), CubesTestAssets.BLOCK_WOOD);
-        blockTerrain.setBlock(new Vector3Int(1, 0, 2), CubesTestAssets.BLOCK_WOOD);
-        blockTerrain.setBlock(new Vector3Int(2, 0, 1), CubesTestAssets.BLOCK_WOOD);
-        blockTerrain.setBlock(new Vector3Int(1, 0, 3), CubesTestAssets.BLOCK_WOOD);
-        blockTerrain.setBlock(new Vector3Int(3, 0, 1), CubesTestAssets.BLOCK_WOOD);
+        blockTerrain.setBlock(new Vector3Int(1, 3, 1), CubesTestAssets.BLOCK_COLOR);
+        blockTerrain.setBlock(new Vector3Int(1, 2, 1), CubesTestAssets.BLOCK_COLOR);
+        blockTerrain.setBlock(new Vector3Int(1, 1, 1), CubesTestAssets.BLOCK_COLOR);
+        blockTerrain.setBlock(new Vector3Int(1, 0, 1), CubesTestAssets.BLOCK_COLOR);
+        blockTerrain.setBlock(new Vector3Int(0, 0, 1), CubesTestAssets.BLOCK_COLOR);
+        blockTerrain.setBlock(new Vector3Int(1, 0, 0), CubesTestAssets.BLOCK_COLOR);
+        blockTerrain.setBlock(new Vector3Int(1, 0, 2), CubesTestAssets.BLOCK_COLOR);
+        blockTerrain.setBlock(new Vector3Int(2, 0, 1), CubesTestAssets.BLOCK_COLOR);
+        blockTerrain.setBlock(new Vector3Int(1, 0, 3), CubesTestAssets.BLOCK_COLOR);
+        blockTerrain.setBlock(new Vector3Int(3, 0, 1), CubesTestAssets.BLOCK_COLOR);
 //        blockTerrain.setBlock(new Vector3Int(1, 0, 1), CubesTestAssets.BLOCK_STONE);
 //        blockTerrain.setBlock(0, 0, 0, CubesTestAssets.BLOCK_GRASS); //For the lazy users :P
 
@@ -53,8 +54,8 @@ public class TestTutorial extends SimpleApplication{
         //blockTerrain.setBlockArea(new Vector3Int(1, 1, 1), new Vector3Int(1, 3, 1), CubesTestAssets.BLOCK_STONE);
 
         //Removing a block works in a similar way
-        blockTerrain.removeBlock(new Vector3Int(1, 2, 1));
-        blockTerrain.removeBlock(new Vector3Int(1, 3, 1));
+        //blockTerrain.removeBlock(new Vector3Int(1, 2, 1));
+        //blockTerrain.removeBlock(new Vector3Int(1, 3, 1));
 
         //The terrain is a jME-Control, you can add it
         //to a node of the scenegraph to display it

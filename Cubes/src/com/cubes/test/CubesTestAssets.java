@@ -26,7 +26,7 @@ public class CubesTestAssets{
     
     public static CubesSettings getSettings(Application application){
         CubesSettings settings = new CubesSettings(application);
-        settings.setDefaultBlockMaterial("Textures/cubes/terrain.png");
+        settings.setDefaultBlockMaterial("Textures/cubes/terrainStrong.png");
         return settings;
     }
     
@@ -35,6 +35,9 @@ public class CubesTestAssets{
             new BlockSkin(new BlockSkin_TextureLocation(1, 0), false),
             new BlockSkin(new BlockSkin_TextureLocation(2, 0), false)
         }){
+    {
+        setShapes(new BlockShape_Rhombicuboctahedron());
+    }
 
         @Override
         protected int getSkinIndex(BlockChunkControl chunk, Vector3Int location, Block.Face face){
@@ -61,6 +64,17 @@ public class CubesTestAssets{
     };
     //public static Block BLOCK_WOOD = new Block(SKINS_WOOD);
     public static Block BLOCK_WOOD = new Block(SKINS_WOOD){{
+        setShapes(new BlockShape_Rhombicuboctahedron());
+    }};
+    private static final BlockSkin[] SKINS_COLOR = new BlockSkin[]{
+        new BlockSkin(new BlockSkin_TextureLocation(0, 3), false),
+        new BlockSkin(new BlockSkin_TextureLocation(1, 3), false),
+        new BlockSkin(new BlockSkin_TextureLocation(2, 3), false),
+        new BlockSkin(new BlockSkin_TextureLocation(3, 3), false),
+        new BlockSkin(new BlockSkin_TextureLocation(4, 3), false),
+        new BlockSkin(new BlockSkin_TextureLocation(5, 3), false)
+    };
+    public static Block BLOCK_COLOR = new Block(SKINS_COLOR){{
         setShapes(new BlockShape_Rhombicuboctahedron());
     }};
     public static Block BLOCK_WOOD_FLAT = new Block(SKINS_WOOD){{
@@ -103,6 +117,7 @@ public class CubesTestAssets{
     public static Block BLOCK_WATER = new Block(new BlockSkin(new BlockSkin_TextureLocation(0, 1), true));
     
     public static void registerBlocks(){
+        BlockManager.register(BLOCK_COLOR);
         BlockManager.register(BLOCK_GRASS);
         BlockManager.register(BLOCK_WOOD);
         BlockManager.register(BLOCK_WOOD_FLAT);

@@ -142,7 +142,7 @@ public class BlockShape_Cuboid extends BlockShape{
 
     @Override
     public String getTypeName() {
-        return BlockShape_Cuboid.class.getName();
+        return "BlockShape_Cuboid";
     }
 
 }

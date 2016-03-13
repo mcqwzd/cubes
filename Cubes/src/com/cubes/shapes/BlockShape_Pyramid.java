@@ -140,6 +140,6 @@ public class BlockShape_Pyramid extends BlockShape{
 
     @Override
     public String getTypeName() {
-        return BlockShape_Pyramid.class.getName();
+        return "BlockShape_Pyramid";
     }
 }

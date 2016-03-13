@@ -656,7 +656,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     byte getLightLevelOfBlock(Vector3Int globalLocation) {
         BlockChunkControl chunk = getChunk(globalLocation);
         if (chunk == null) {
-            return 0;
+            return 1;
         }
         Vector3Int localBlockLocation = getLocalBlockLocation(globalLocation, chunk);
         return chunk.getLightAt(localBlockLocation);
@@ -665,7 +665,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     byte getLightSourceOfBlock(Vector3Int globalLocation) {
         BlockChunkControl chunk = getChunk(globalLocation);
         if (chunk == null) {
-            return 0;
+            return 1;
         }
         Vector3Int localBlockLocation = getLocalBlockLocation(globalLocation, chunk);
         return chunk.getLightSourceAt(localBlockLocation);

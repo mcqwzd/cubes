@@ -38,7 +38,7 @@ public abstract class BlockShape{
         if(neighborBlock == null) {
             return NeighborRelation.empty;
         }
-        if (neighborBlock.getClass().equals(this.getClass())) {
+        if (neighborBlock.getShape(chunk, blockLocation).getTypeName().equals(this.getTypeName())) {
             return NeighborRelation.identical;
         }
         return NeighborRelation.different;
@@ -136,8 +136,6 @@ public abstract class BlockShape{
             float lightFactor = ((float)lightLevel+1) / ((float)maxLight + 1);
             return lightFactor;
         }
-
-
     }
 
     
