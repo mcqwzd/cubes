@@ -29,6 +29,13 @@ public class CubesSettings{
     private int texturesCountY = 16;
     private boolean lightsEnabled = false;
     private byte sunlight = 9;
+    private int chunkViewX = 5;
+    private int chunkViewY = 5;
+    private int chunkViewZ = 5;
+    
+    public Vector3Int getChunkViewDistance() {
+        return new Vector3Int(chunkViewX, chunkViewY, chunkViewZ);
+    }
 
     public AssetManager getAssetManager(){
         return assetManager;
@@ -107,4 +114,13 @@ public class CubesSettings{
     void setSunlightLevel(byte maxSun) {
         this.sunlight = maxSun; 
     }
+
+    public long getSeed() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public long getTerrainSeed() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }

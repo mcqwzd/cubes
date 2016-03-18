@@ -809,7 +809,7 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
     
     @Override
     protected boolean canBeMerged(Block.Face face) {
-        return false;
+        return true;
     }
 
     private void addFaceIndices(List<Short> indices, int offset, float lightColor1, float lightColor2, float lightColor3){
