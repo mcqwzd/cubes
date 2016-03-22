@@ -22,7 +22,7 @@ public class CubesSettings{
     private AssetManager assetManager;
     private float blockSize = 3;
     private int chunkSizeX = 16;
-    private int chunkSizeY = 256;
+    private int chunkSizeY = 16;
     private int chunkSizeZ = 16;
     private Material blockMaterial;
     private int texturesCountX = 16;

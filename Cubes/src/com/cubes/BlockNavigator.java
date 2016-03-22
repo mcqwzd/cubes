@@ -66,15 +66,36 @@ public class BlockNavigator{
                 (int) (collisionLocation.getX() / blockTerrain.getSettings().getBlockSize()),
                 (int) (collisionLocation.getY() / blockTerrain.getSettings().getBlockSize()),
                 (int) (collisionLocation.getZ() / blockTerrain.getSettings().getBlockSize()));
+        if (collisionLocation.getX() < 0) {
+            blockLocation.setX(blockLocation.getX() - 1);
+        }
+        if (collisionLocation.getY() < 0) {
+            blockLocation.setY(blockLocation.getY() - 1);
+        }
+        if (collisionLocation.getZ() < 0) {
+            blockLocation.setZ(blockLocation.getZ() - 1);
+        }
         if((blockTerrain.getBlock(blockLocation) != null) == getNeighborLocation){
             if((collisionLocation.getX() % blockTerrain.getSettings().getBlockSize()) == 0) {
-                blockLocation.subtractLocal(1, 0, 0);
+                if(collisionLocation.getX() >= 0) {
+                    blockLocation.subtractLocal(1, 0, 0);
+                } else {
+                    blockLocation.subtractLocal(-1, 0, 0);
+                }
             }
             else if((collisionLocation.getY() % blockTerrain.getSettings().getBlockSize()) == 0){
-                blockLocation.subtractLocal(0, 1, 0);
+                if(collisionLocation.getY() >= 0) {
+                    blockLocation.subtractLocal(0, 1, 0);
+                } else {
+                    blockLocation.subtractLocal(0, -1, 0);
+                }
             }
             else if((collisionLocation.getZ() % blockTerrain.getSettings().getBlockSize()) == 0){
-                blockLocation.subtractLocal(0, 0, 1);
+                if(collisionLocation.getZ() >= 0) {
+                    blockLocation.subtractLocal(0, 0, 1);
+                } else {
+                    blockLocation.subtractLocal(0, 0, -1);
+                }
             }
         }
         return blockLocation;

@@ -51,10 +51,6 @@ public class Vector3Int{
         return this;
     }
     
-    public boolean hasNegativeCoordinate(){
-        return ((x < 0) || (y < 0) || (z < 0));
-    }
-    
     public Vector3Int set(Vector3Int vector3Int){
         return set(vector3Int.getX(), vector3Int.getY(), vector3Int.getZ());
     }

@@ -100,7 +100,7 @@ public abstract class BlockShape{
         BlockTerrainControl terrain = chunk.getTerrain();
         boolean lightEnabled = terrain.getSettings().getLightsEnabled();
         if (!lightEnabled) {
-            return 1.0f;
+            return 0.7f;
         }
         Vector3Int neighborBlock = chunk.getNeighborBlockGlobalLocation(blockLocation, face);
         byte sunlight = terrain.getSettings().getSunlightLevel();
