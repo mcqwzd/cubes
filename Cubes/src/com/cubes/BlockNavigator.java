@@ -60,12 +60,15 @@ public class BlockNavigator{
         return null;
     }
     
-    public static Vector3Int getPointedBlockLocation(BlockTerrainControl blockTerrain, Vector3f collisionContactPoint, boolean getNeighborLocation){
+    public static Vector3Int getPointedBlockLocation(BlockTerrainControl blockTerrain, Vector3f collisionContactPoint, boolean getNeighborLocation, Vector3f collisionNorm){
         Vector3f collisionLocation = Util.compensateFloatRoundingErrors(collisionContactPoint);
+        float blockSize = blockTerrain.getSettings().getBlockSize();
         Vector3Int blockLocation = new Vector3Int(
-                (int) (collisionLocation.getX() / blockTerrain.getSettings().getBlockSize()),
-                (int) (collisionLocation.getY() / blockTerrain.getSettings().getBlockSize()),
-                (int) (collisionLocation.getZ() / blockTerrain.getSettings().getBlockSize()));
+                (int) (collisionLocation.getX() / blockSize),
+                (int) (collisionLocation.getY() / blockSize),
+                (int) (collisionLocation.getZ() / blockSize));
+        
+        // Adjust for negitive cordinates
         if (collisionLocation.getX() < 0) {
             blockLocation.setX(blockLocation.getX() - 1);
         }
@@ -75,23 +78,65 @@ public class BlockNavigator{
         if (collisionLocation.getZ() < 0) {
             blockLocation.setZ(blockLocation.getZ() - 1);
         }
+
+        // if a collisionNorm is provided, and it only has 1 vector
+        // then use that vector to find neighbor. (works for 'square' blocks)
+        if (collisionNorm != null) {
+            int nonZeroCount = 0;
+            if (collisionNorm.x != 0) nonZeroCount++;
+            if (collisionNorm.y != 0) nonZeroCount++;
+            if (collisionNorm.z != 0) nonZeroCount++;
+            if (nonZeroCount == 1) {
+                if (getNeighborLocation) {
+                    if (collisionNorm.x < 0) {
+                        return blockLocation.subtract(1,0,0);
+                    }
+                    if (collisionNorm.y < 0) {
+                        return blockLocation.subtract(0,1,0);
+                    }
+                    if (collisionNorm.z < 0) {
+                        return blockLocation.subtract(0,0,1);
+                    }
+                    return blockLocation;
+                } else {
+                    if (collisionNorm.x > 0) {
+                        return blockLocation.subtract(1,0,0);
+                    }
+                    if (collisionNorm.y > 0) {
+                        return blockLocation.subtract(0,1,0);
+                    }
+                    if (collisionNorm.z > 0) {
+                        return blockLocation.subtract(0,0,1);
+                    }
+                    return blockLocation;
+                }
+            }
+        }
+        // else, find the closest edge.
         if((blockTerrain.getBlock(blockLocation) != null) == getNeighborLocation){
-            if((collisionLocation.getX() % blockTerrain.getSettings().getBlockSize()) == 0) {
-                if(collisionLocation.getX() >= 0) {
+            float modX = Math.abs(collisionLocation.getX() % blockSize);
+            float modY = Math.abs(collisionLocation.getY() % blockSize);
+            float modZ = Math.abs(collisionLocation.getZ() % blockSize);
+            float mmodX = Math.min(modX, blockSize - modX);
+            float mmodY = Math.min(modY, blockSize - modY);
+            float mmodZ = Math.min(modZ, blockSize - modZ);
+            float minMod = Math.min(mmodX, Math.min(mmodY, mmodZ));
+            if( mmodX == minMod) {
+                if(mmodX == modX) {
                     blockLocation.subtractLocal(1, 0, 0);
                 } else {
                     blockLocation.subtractLocal(-1, 0, 0);
                 }
             }
-            else if((collisionLocation.getY() % blockTerrain.getSettings().getBlockSize()) == 0){
-                if(collisionLocation.getY() >= 0) {
+            else if( mmodY == minMod) {
+                if(mmodY == modY) {
                     blockLocation.subtractLocal(0, 1, 0);
                 } else {
                     blockLocation.subtractLocal(0, -1, 0);
                 }
             }
-            else if((collisionLocation.getZ() % blockTerrain.getSettings().getBlockSize()) == 0){
-                if(collisionLocation.getZ() >= 0) {
+            else if( mmodZ == minMod) {
+                if(mmodZ == modZ) {
                     blockLocation.subtractLocal(0, 0, 1);
                 } else {
                     blockLocation.subtractLocal(0, 0, -1);

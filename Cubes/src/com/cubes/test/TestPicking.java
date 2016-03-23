@@ -14,6 +14,7 @@ import com.jme3.math.Vector2f;
 import com.jme3.system.AppSettings;
 import com.jme3.scene.Node;
 import com.cubes.*;
+import com.jme3.math.Triangle;
 
 public class TestPicking extends SimpleApplication implements ActionListener{
 
@@ -103,7 +104,8 @@ public class TestPicking extends SimpleApplication implements ActionListener{
         CollisionResults results = getRayCastingResults(terrainNode);
         if(results.size() > 0){
             Vector3f collisionContactPoint = results.getClosestCollision().getContactPoint();
-            return BlockNavigator.getPointedBlockLocation(blockTerrain, collisionContactPoint, getNeighborLocation);
+            Vector3f norm = results.getClosestCollision().getTriangle(new Triangle()).getNormal();
+            return BlockNavigator.getPointedBlockLocation(blockTerrain, collisionContactPoint, getNeighborLocation, norm);
         }
         return null;
     }

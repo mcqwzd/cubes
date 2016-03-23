@@ -97,6 +97,9 @@ public abstract class BlockShape{
     }
     
     protected float getLightLevelOfFace(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face) {
+        if (blockLocation.getY() == 31 && face == Block.Face.Top) {
+            System.out.println("getting top");
+        }
         BlockTerrainControl terrain = chunk.getTerrain();
         boolean lightEnabled = terrain.getSettings().getLightsEnabled();
         if (!lightEnabled) {
@@ -120,6 +123,19 @@ public abstract class BlockShape{
             }
         } else if (sunlight == 9) {
             switch (lightLevel) {
+                 case 0: return 0.24f;
+                 case 1: return 0.36f;
+                 case 2: return 0.44f;
+                 case 3: return 0.52f;
+                 case 4: return 0.60f;
+                 case 5: return 0.68f;
+                 case 6: return 0.76f;
+                 case 7: return 0.84f;
+                 case 8: return 0.92f;
+                 case 9: return 1f;
+                 default: return 1f;
+             }
+/*            switch (lightLevel) {
                  case 0: return 0.1f;
                  case 1: return 0.15f;
                  case 2: return 0.2f;
@@ -131,7 +147,7 @@ public abstract class BlockShape{
                  case 8: return 0.8f;
                  case 9: return 1f;
                  default: return 1f;
-             }
+             }*/
         } else {
             float lightFactor = ((float)lightLevel+1) / ((float)maxLight + 1);
             return lightFactor;

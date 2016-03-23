@@ -147,6 +147,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         if(isValidBlockLocation(location)){
             byte blockType = BlockManager.getType(block);
             blockTypes[location.getX()][location.getY()][location.getZ()] = blockType;
+            lightsToRemove.put(BlockTerrainControl.keyify(location), new LightQueueElement(location, this));
             updateBlockState(location);
             this.markNeedUpdate();
         }
@@ -155,6 +156,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
     public void removeBlock(Vector3Int location){
         if(isValidBlockLocation(location)){
             blockTypes[location.getX()][location.getY()][location.getZ()] = 0;
+            lightsToRemove.put(BlockTerrainControl.keyify(location), new LightQueueElement(location, this));
             updateBlockState(location);
             this.markNeedUpdate();
         }
@@ -221,6 +223,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
                 Vector3Int neighborLocation = getNeighborBlockGlobalLocation(location, Block.Face.values()[i]);
                 BlockChunkControl chunk = terrain.getChunkByBlockLocation(neighborLocation);
                 if(chunk != null){
+                    System.out.println("Updating face " + i);
                     chunk.updateBlockInformation(neighborLocation.subtract(chunk.getBlockLocation()));
                     chunk.markNeedUpdate();
                 }
@@ -469,11 +472,11 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         if (brightness < 0) {
             return false;
         }
-        //if (getBlock(localBlockLocation) != null) {
-        //    sunlightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] = 0;
-        //    needsMeshUpdate = true;
-        //    return false;
-        //}
+        if (getBlock(localBlockLocation) != null) {
+            sunlightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] = 0;
+            markNeedUpdate();
+            return false;
+        }
         if (localBlockLocation.getX() < 0 || localBlockLocation.getX() > 15) {
             localBlockLocation.setX(0);
         }
@@ -493,6 +496,9 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
     }
 
     boolean propigateDark(Vector3Int localBlockLocation, byte oldLight) {
+        if (oldLight < 0) {
+            return false;
+        }
         if (sunlightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] == 0) {
             return false;
         }
@@ -541,6 +547,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
 
     void setSunlight(SunlightChunk sunlight) {
         this.sunlightChunk = sunlight;
+        this.sunlightChunk.validateChunk(this.location);
         if (sunlightChunk.isChunkUnderground(this)) {
             return;
         }
@@ -557,13 +564,14 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
     }
     void updateSunlight(int blockX, int blockY, int blockZ) {
         sunlightSources[blockX][blockY][blockZ] = 0;
-        sunlightLevels[blockX][blockY][blockZ] = 0;
+        //sunlightLevels[blockX][blockY][blockZ] = 0;
         Vector3Int blockLoc = new Vector3Int(blockX, blockY, blockZ);
         if (sunlightChunk.isBlockAboveSurface(this.location.getY(), blockLoc)) {
             lightsToAdd.put(BlockTerrainControl.keyify(blockLoc), new LightQueueElement(blockLoc, this, sunlight));
         } else {
             lightsToRemove.put(BlockTerrainControl.keyify(blockLoc), new LightQueueElement(blockLoc, this, sunlight));
         }
+        this.markNeedUpdate();
     }
     
     void addSunlights() {
@@ -582,7 +590,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
                 if (!sunlightChunk.isChunkUnderground(this)) {
                     for (int iX = 0; iX < settings.getChunkSizeX(); ++iX) {
                         for (int iZ = 0; iZ < settings.getChunkSizeZ(); ++iZ) {
-                            for (int iY = settings.getChunkSizeY() -1 ; iY > 0; --iY) {
+                            for (int iY = settings.getChunkSizeY() -1 ; iY >= 0; --iY) {
                                 updateSunlight(iX, iY, iZ);
                             }
                         }
