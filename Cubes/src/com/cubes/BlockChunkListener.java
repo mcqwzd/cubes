@@ -11,4 +11,6 @@ package com.cubes;
 public interface BlockChunkListener{
     
     public abstract void onSpatialUpdated(BlockChunkControl blockChunk);
+
+    public abstract void onSpatialRemoved(BlockChunkControl chunk);
 }

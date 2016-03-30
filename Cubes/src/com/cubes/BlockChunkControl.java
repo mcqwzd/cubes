@@ -147,7 +147,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         if(isValidBlockLocation(location)){
             byte blockType = BlockManager.getType(block);
             blockTypes[location.getX()][location.getY()][location.getZ()] = blockType;
-            lightsToRemove.put(BlockTerrainControl.keyify(location), new LightQueueElement(location, this));
+            lightsToRemove.put(location, new LightQueueElement(location, this));
             updateBlockState(location);
             this.markNeedUpdate(true);
         }
@@ -156,7 +156,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
     public void removeBlock(Vector3Int location){
         if(isValidBlockLocation(location)){
             blockTypes[location.getX()][location.getY()][location.getZ()] = 0;
-            lightsToRemove.put(BlockTerrainControl.keyify(location), new LightQueueElement(location, this));
+            lightsToRemove.put(location, new LightQueueElement(location, this));
             updateBlockState(location);
             this.markNeedUpdate(true);
         }
@@ -410,8 +410,8 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         }
         this.markNeedUpdate(true);
     }
-    private HashMap<String, LightQueueElement> lightsToAdd = new HashMap<String, LightQueueElement> ();
-    private HashMap<String, LightQueueElement> lightsToRemove = new HashMap<String, LightQueueElement> ();
+    private HashMap<Vector3Int, LightQueueElement> lightsToAdd = new HashMap<Vector3Int, LightQueueElement> ();
+    private HashMap<Vector3Int, LightQueueElement> lightsToRemove = new HashMap<Vector3Int, LightQueueElement> ();
     public void read(int slice, BitInputStream inputStream) throws IOException{
         for(int x=0;x<blockTypes.length;x++){
             for(int z=0;z<blockTypes[0][0].length;z++){
@@ -440,14 +440,14 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         //long endTime;
         //startTime = Calendar.getInstance().getTimeInMillis();
         terrain.removeLightSource(lightsToRemove);
-        lightsToRemove = new HashMap<String, LightQueueElement> ();
+        lightsToRemove = new HashMap<Vector3Int, LightQueueElement> ();
         //endTime = Calendar.getInstance().getTimeInMillis();
         //if (endTime - startTime > 2) {
         //    System.err.println("removing lights took " + (endTime - startTime) + "ms");
         //}
         //startTime = Calendar.getInstance().getTimeInMillis();
         terrain.addLightSource(lightsToAdd);
-        lightsToAdd = new HashMap<String, LightQueueElement> ();
+        lightsToAdd = new HashMap<Vector3Int, LightQueueElement> ();
         //endTime = Calendar.getInstance().getTimeInMillis();
         //if (endTime - startTime > 2) {
         //    System.err.println("putting lights took " + (endTime - startTime) + "ms");
@@ -571,9 +571,9 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         //sunlightLevels[blockX][blockY][blockZ] = 0;
         Vector3Int blockLoc = new Vector3Int(blockX, blockY, blockZ);
         if (sunlightChunk.isBlockAboveSurface(this.location.getY(), blockLoc)) {
-            lightsToAdd.put(BlockTerrainControl.keyify(blockLoc), new LightQueueElement(blockLoc, this, sunlight));
+            lightsToAdd.put(blockLoc, new LightQueueElement(blockLoc, this, sunlight));
         } else {
-            lightsToRemove.put(BlockTerrainControl.keyify(blockLoc), new LightQueueElement(blockLoc, this, sunlight));
+            lightsToRemove.put(blockLoc, new LightQueueElement(blockLoc, this, sunlight));
         }
         this.markNeedUpdate(false);
     }
@@ -581,8 +581,8 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
     void addSunlights() {
         // Reset light state
         if (settings.getLightsEnabled()) {
-            lightsToRemove = new HashMap<String, LightQueueElement> ();
-            lightsToAdd = new HashMap<String, LightQueueElement> ();
+            lightsToRemove = new HashMap<Vector3Int, LightQueueElement> ();
+            lightsToAdd = new HashMap<Vector3Int, LightQueueElement> ();
             int cX = settings.getChunkSizeX();
             int cY = settings.getChunkSizeY();
             int cZ = settings.getChunkSizeZ();
@@ -602,7 +602,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
                 }
             }
         }
-        this.updateLights();
+        //this.updateLights();
     }
 
 }

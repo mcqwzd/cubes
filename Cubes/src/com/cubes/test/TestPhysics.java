@@ -88,6 +88,10 @@ public class TestPhysics extends SimpleApplication implements ActionListener{
                 bulletAppState.getPhysicsSpace().add(rigidBodyControl);
                 rigidBodyControl.setCollisionShape(new MeshCollisionShape(optimizedGeometry.getMesh()));
             }
+            @Override
+            public void onSpatialRemoved(BlockChunkControl chunk) {
+            }
+
         });
         terrainNode.addControl(blockTerrain);
         terrainNode.setShadowMode(RenderQueue.ShadowMode.CastAndReceive);
