@@ -35,6 +35,7 @@ public class Util{
     
     public static float compensateFloatRoundingErrors(float number){
         float remainder = (number % 1);
+        if (remainder < 0) { remainder *= -1; }
         if ((remainder < MAX_FLOAT_ROUNDING_DIFFERENCE) || (remainder > (1 - MAX_FLOAT_ROUNDING_DIFFERENCE))){
             number = Math.round(number);
         }

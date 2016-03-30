@@ -38,7 +38,8 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
     private Node node = new Node("Cube Chunk");
     private Geometry optimizedGeometry_Opaque;
     private Geometry optimizedGeometry_Transparent;
-    private boolean needsMeshUpdate;
+    private boolean needsMeshUpdate = false;
+    private boolean needsPhysicsUpdate = false;
     public BlockChunkControl(BlockTerrainControl terrain, Vector3Int location) {
         this(terrain, location.getX(), location.getY(), location.getZ());
     }
@@ -82,7 +83,6 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
 
     }
     
-
     @Override
     public void setSpatial(Spatial spatial){
         Spatial oldSpatial = this.spatial;
@@ -149,7 +149,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
             blockTypes[location.getX()][location.getY()][location.getZ()] = blockType;
             lightsToRemove.put(BlockTerrainControl.keyify(location), new LightQueueElement(location, this));
             updateBlockState(location);
-            this.markNeedUpdate();
+            this.markNeedUpdate(true);
         }
     }
     
@@ -158,12 +158,13 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
             blockTypes[location.getX()][location.getY()][location.getZ()] = 0;
             lightsToRemove.put(BlockTerrainControl.keyify(location), new LightQueueElement(location, this));
             updateBlockState(location);
-            this.markNeedUpdate();
+            this.markNeedUpdate(true);
         }
     }
     
-    public void markNeedUpdate() {
+    public void markNeedUpdate(boolean needPhysicsUpdate) {
         needsMeshUpdate = true;
+        this.needsPhysicsUpdate = this.needsPhysicsUpdate || needPhysicsUpdate;
         if (this.terrain != null) {
             this.terrain.addChunkToNeedsUpdateList(this);
         } 
@@ -200,7 +201,10 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
             //endTime = Calendar.getInstance().getTimeInMillis();
             //System.out.println(" setting optimized mesh took " + (endTime - startTime));
             needsMeshUpdate = false;
-            return true;
+            if (needsPhysicsUpdate) {
+                needsPhysicsUpdate = false;
+                return true;
+            }
         }
         return false;
     }
@@ -223,9 +227,9 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
                 Vector3Int neighborLocation = getNeighborBlockGlobalLocation(location, Block.Face.values()[i]);
                 BlockChunkControl chunk = terrain.getChunkByBlockLocation(neighborLocation);
                 if(chunk != null){
-                    System.out.println("Updating face " + i);
+                    //System.out.println("Updating face " + i);
                     chunk.updateBlockInformation(neighborLocation.subtract(chunk.getBlockLocation()));
-                    chunk.markNeedUpdate();
+                    chunk.markNeedUpdate(true);
                 }
             }
             //terrain.removeLightSource(lightsToRemove);
@@ -404,7 +408,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
             //terrain.removeLightSource(lightsToRemove);
             //terrain.addLightSource(lightsToAdd);
         }
-        this.markNeedUpdate();
+        this.markNeedUpdate(true);
     }
     private HashMap<String, LightQueueElement> lightsToAdd = new HashMap<String, LightQueueElement> ();
     private HashMap<String, LightQueueElement> lightsToRemove = new HashMap<String, LightQueueElement> ();
@@ -428,7 +432,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         //if (endTime - startTime > 2) {
         //    System.err.println("update block info took " + (endTime - startTime) + "ms");
         //}
-        this.markNeedUpdate();
+        this.markNeedUpdate(true);
     }
     
     public void updateLights() {
@@ -474,7 +478,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         }
         if (getBlock(localBlockLocation) != null) {
             sunlightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] = 0;
-            markNeedUpdate();
+            markNeedUpdate(false);
             return false;
         }
         if (localBlockLocation.getX() < 0 || localBlockLocation.getX() > 15) {
@@ -489,7 +493,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         byte oldLightLevel = sunlightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()];
         if (oldLightLevel < brightness) {
             sunlightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] = brightness;
-            this.markNeedUpdate();
+            this.markNeedUpdate(false);
             return true;
         }
         return false;
@@ -504,7 +508,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         }
         if (sunlightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] <= oldLight) {
             sunlightLevels[localBlockLocation.getX()][localBlockLocation.getY()][localBlockLocation.getZ()] = 0;
-            this.markNeedUpdate();
+            this.markNeedUpdate(false);
             return true;
         }
         return false;
@@ -571,7 +575,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
         } else {
             lightsToRemove.put(BlockTerrainControl.keyify(blockLoc), new LightQueueElement(blockLoc, this, sunlight));
         }
-        this.markNeedUpdate();
+        this.markNeedUpdate(false);
     }
     
     void addSunlights() {

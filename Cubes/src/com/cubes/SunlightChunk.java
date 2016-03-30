@@ -51,10 +51,10 @@ public class SunlightChunk {
     }
 
     int setSolidBlock(int chunkX, int chunkY, int chunkZ, int iX, int iY, int iZ, boolean updateDelta) {
-        System.out.println("setSolidBlock " + chunkX + ", " + chunkY + ", " + chunkZ + ", " + iX + ", " + iY + ", " + iZ + ", " + (updateDelta ? "true":"false"));
+        //System.out.println("setSolidBlock " + chunkX + ", " + chunkY + ", " + chunkZ + ", " + iX + ", " + iY + ", " + iZ + ", " + (updateDelta ? "true":"false"));
         iY = getGlobalYFromLocalY(chunkY, iY);
         if (lowestBlockWithSunlight != Integer.MAX_VALUE && lowestBlockWithSunlight > iY) {
-            System.out.println("Return 0 because chunk under lowest block of " + lowestBlockWithSunlight + " > " + iY);
+            //System.out.println("Return 0 because chunk under lowest block of " + lowestBlockWithSunlight + " > " + iY);
             return 0;
         }
         int oldElevation = surfaceBlockElevation[iX][iZ];
@@ -67,10 +67,10 @@ public class SunlightChunk {
             //if (lowestBlockWithSunlight == oldElevation) {
                 // we no longer know what the lowest block is.
             //}
-            System.out.println("Returning old " + oldElevation);
+            //System.out.println("Returning old " + oldElevation);
             return oldElevation;
         }
-            System.out.println("Return 0");
+            //System.out.println("Return 0");
         return 0;
     }
 
@@ -90,10 +90,10 @@ public class SunlightChunk {
     }
 
     void setOpenBlock(int chunkX, int chunkY, int chunkZ, int x, int y, int z, boolean updateDelta) {
-        System.out.println("setOpenBlock " + chunkX + ", " + chunkY + ", " + chunkZ + ", " + x + ", " + y + ", " + z + ", " + (updateDelta ? "true":"false"));
+        //System.out.println("setOpenBlock " + chunkX + ", " + chunkY + ", " + chunkZ + ", " + x + ", " + y + ", " + z + ", " + (updateDelta ? "true":"false"));
         int globalY = getGlobalYFromLocalY(chunkY, y);
         if (globalY == surfaceBlockElevation[x][z]) {
-            System.out.println("at surface " + globalY);
+            //System.out.println("at surface " + globalY);
             surfaceBlockElevation[x][z] = terrain.findNextBlockDown(chunkLocation.getX(), chunkLocation.getZ(), x, z, globalY);
             if ( surfaceBlockElevation[x][z] < lowestBlockWithSunlight) {
                 lowestBlockWithSunlight =  surfaceBlockElevation[x][z];
@@ -102,7 +102,7 @@ public class SunlightChunk {
                 terrain.updateSunlightFromTo(getGlobalXFromLocalX(chunkX, x), getGlobalZFromLocalZ(chunkZ, z), surfaceBlockElevation[x][z], globalY);
             }
         } else {
-            System.out.println("Not at surface " + globalY + " != " + surfaceBlockElevation[x][z]);
+            //System.out.println("Not at surface " + globalY + " != " + surfaceBlockElevation[x][z]);
         }
     }
 

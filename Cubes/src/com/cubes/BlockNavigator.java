@@ -62,21 +62,29 @@ public class BlockNavigator{
     
     public static Vector3Int getPointedBlockLocation(BlockTerrainControl blockTerrain, Vector3f collisionContactPoint, boolean getNeighborLocation, Vector3f collisionNorm){
         Vector3f collisionLocation = Util.compensateFloatRoundingErrors(collisionContactPoint);
-        float blockSize = blockTerrain.getSettings().getBlockSize();
+        double blockSize = (double)blockTerrain.getSettings().getBlockSize();
         Vector3Int blockLocation = new Vector3Int(
                 (int) (collisionLocation.getX() / blockSize),
                 (int) (collisionLocation.getY() / blockSize),
                 (int) (collisionLocation.getZ() / blockSize));
-        
+        int xAdjust = 1;
+        int yAdjust = 1;
+        int zAdjust = 1;
         // Adjust for negitive cordinates
         if (collisionLocation.getX() < 0) {
             blockLocation.setX(blockLocation.getX() - 1);
+            collisionNorm.x *= -1;
+            xAdjust = -1;
         }
         if (collisionLocation.getY() < 0) {
             blockLocation.setY(blockLocation.getY() - 1);
+            collisionNorm.y *= -1;
+            yAdjust = -1;
         }
         if (collisionLocation.getZ() < 0) {
             blockLocation.setZ(blockLocation.getZ() - 1);
+            collisionNorm.z *= -1;
+            zAdjust = -1;
         }
 
         // if a collisionNorm is provided, and it only has 1 vector
@@ -88,25 +96,40 @@ public class BlockNavigator{
             if (collisionNorm.z != 0) nonZeroCount++;
             if (nonZeroCount == 1) {
                 if (getNeighborLocation) {
-                    if (collisionNorm.x < 0) {
-                        return blockLocation.subtract(1,0,0);
+                     if (collisionNorm.x < 0) {
+                        return blockLocation.subtract(xAdjust,0,0);
+//                        return blockLocation;//.add(1,0,0);
+                    } else if (collisionNorm.x > 0) {
+  //                      return blockLocation.subtract(1,0,0);
                     }
                     if (collisionNorm.y < 0) {
-                        return blockLocation.subtract(0,1,0);
+                        return blockLocation.subtract(0,yAdjust,0);
+    //                    return blockLocation;//.add(0,1,0);
+                    } else if (collisionNorm.y > 0) {
+      //                  return blockLocation.subtract(0,1,0);
                     }
                     if (collisionNorm.z < 0) {
-                        return blockLocation.subtract(0,0,1);
+                        return blockLocation.subtract(0,0,zAdjust);
+          //              return blockLocation;//.add(0,0,1);
+                    } else if (collisionNorm.z > 0) {
+        //                return blockLocation.subtract(0,0,1);
                     }
                     return blockLocation;
                 } else {
-                    if (collisionNorm.x > 0) {
-                        return blockLocation.subtract(1,0,0);
+                    if (collisionNorm.x < 0) {
+                        return blockLocation;//.add(1,0,0);
+                    } else if (collisionNorm.x > 0) {
+                        return blockLocation.subtract(xAdjust,0,0);
                     }
-                    if (collisionNorm.y > 0) {
-                        return blockLocation.subtract(0,1,0);
+                    if (collisionNorm.y < 0) {
+                        return blockLocation;//.add(0,1,0);
+                    } else if (collisionNorm.y > 0) {
+                        return blockLocation.subtract(0,yAdjust,0);
                     }
-                    if (collisionNorm.z > 0) {
-                        return blockLocation.subtract(0,0,1);
+                    if (collisionNorm.z < 0) {
+                        return blockLocation;//.add(0,0,1);
+                    } else if (collisionNorm.z > 0) {
+                        return blockLocation.subtract(0,0,zAdjust);
                     }
                     return blockLocation;
                 }
@@ -114,32 +137,32 @@ public class BlockNavigator{
         }
         // else, find the closest edge.
         if((blockTerrain.getBlock(blockLocation) != null) == getNeighborLocation){
-            float modX = Math.abs(collisionLocation.getX() % blockSize);
-            float modY = Math.abs(collisionLocation.getY() % blockSize);
-            float modZ = Math.abs(collisionLocation.getZ() % blockSize);
-            float mmodX = Math.min(modX, blockSize - modX);
-            float mmodY = Math.min(modY, blockSize - modY);
-            float mmodZ = Math.min(modZ, blockSize - modZ);
+            float modX = Math.abs((float)(collisionLocation.getX() % blockSize));
+            float modY = Math.abs((float)(collisionLocation.getY() % blockSize));
+            float modZ = Math.abs((float)(collisionLocation.getZ() % blockSize));
+            float mmodX = Math.min(modX, (float)(blockSize - modX));
+            float mmodY = Math.min(modY,(float)( blockSize - modY));
+            float mmodZ = Math.min(modZ, (float)(blockSize - modZ));
             float minMod = Math.min(mmodX, Math.min(mmodY, mmodZ));
             if( mmodX == minMod) {
                 if(mmodX == modX) {
-                    blockLocation.subtractLocal(1, 0, 0);
+                    blockLocation.subtractLocal(xAdjust, 0, 0);
                 } else {
-                    blockLocation.subtractLocal(-1, 0, 0);
+                    blockLocation.subtractLocal(-1 * xAdjust, 0, 0);
                 }
             }
             else if( mmodY == minMod) {
                 if(mmodY == modY) {
-                    blockLocation.subtractLocal(0, 1, 0);
+                    blockLocation.subtractLocal(0, yAdjust, 0);
                 } else {
-                    blockLocation.subtractLocal(0, -1, 0);
+                    blockLocation.subtractLocal(0, -1 * yAdjust, 0);
                 }
             }
             else if( mmodZ == minMod) {
                 if(mmodZ == modZ) {
-                    blockLocation.subtractLocal(0, 0, 1);
+                    blockLocation.subtractLocal(0, 0, zAdjust);
                 } else {
-                    blockLocation.subtractLocal(0, 0, -1);
+                    blockLocation.subtractLocal(0, 0, -1 * zAdjust);
                 }
             }
         }
