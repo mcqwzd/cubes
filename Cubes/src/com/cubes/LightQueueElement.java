@@ -6,7 +6,8 @@ package com.cubes;
 
 /**
  *
- * @author funin_000
+ * @author BigScorch (github/funinvegas)
+ * Class for queueing light updates so they can be calculated at a more convienient time.
  */
 public class LightQueueElement {
     private Vector3Int location;

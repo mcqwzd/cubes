@@ -9,8 +9,9 @@ package com.cubes;
  * @author Carl
  */
 public interface BlockChunkListener{
-    
+    // The shape of a chunk has changed (including from nothing to something)
     public abstract void onSpatialUpdated(BlockChunkControl blockChunk);
 
-    public abstract void onSpatialRemoved(BlockChunkControl chunk);
+    // A chunk has been removed from the terrain
+    public abstract void onSpatialRemoved(BlockChunkControl blockChunk);
 }

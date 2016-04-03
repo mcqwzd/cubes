@@ -8,7 +8,8 @@ import com.jme3.terrain.Terrain;
 
 /**
  *
- * @author funin_000
+ * @author Big Scorch (github/funinvegas)
+ * Class to track the hightest opaque block in any given column in order to calculate sunlight
  */
 public class SunlightChunk {
     private int lowestBlockWithSunlight = Integer.MAX_VALUE;
@@ -32,7 +33,7 @@ public class SunlightChunk {
     }
     boolean validateChunk(Vector3Int chunkLoc) {
         if ((chunkLoc.getX() != chunkLocation.getX()) || (chunkLoc.getZ() != chunkLocation.getZ())) {
-            System.out.println("Assigned the wrong chunk");
+            System.err.println("Assigned the wrong sunlight chunk");
             return false;
         }
         return true;

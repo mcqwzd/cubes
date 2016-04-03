@@ -71,7 +71,7 @@ public class TestPhysics extends SimpleApplication implements ActionListener{
         CubesTestAssets.initializeEnvironment(this);
         
         cubesSettings = CubesTestAssets.getSettings(this);
-        blockTerrain = new BlockTerrainControl(cubesSettings, new Vector3Int(7, 1, 7));
+        blockTerrain = new BlockTerrainControl(cubesSettings);
         blockTerrain.setBlocksFromNoise(new Vector3Int(), terrainSize, 0.8f, CubesTestAssets.BLOCK_GRASS);
         blockTerrain.addChunkListener(new BlockChunkListener(){
 

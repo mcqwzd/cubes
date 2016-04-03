@@ -15,20 +15,25 @@ import com.jme3.terrain.Terrain;
  * @author Carl
  */
 public abstract class BlockShape{
+    // Enum to relate block to neighboring blocks
     protected enum NeighborRelation {
         empty,
         different,
         identical
     }
+    // Compare block in one direction
     protected NeighborRelation getNeighborRelation(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face1) {
         return getNeighborRelation(chunk, BlockNavigator.getNeighborBlockLocalLocation(blockLocation, face1));
     }
+    // Compare block in two directions (diagnol line edge)
     protected NeighborRelation getNeighborRelation(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face1, Block.Face face2) {
         return getNeighborRelation(chunk, BlockNavigator.getNeighborBlockLocalLocation(blockLocation, face2), face1);
     }
+    // Compare block in three directions (corner point edge)
     protected NeighborRelation getNeighborRelation(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face1, Block.Face face2, Block.Face face3) {
        return getNeighborRelation(chunk, BlockNavigator.getNeighborBlockLocalLocation(blockLocation, face3), face1, face2);
     }
+    // Compare block by location
     protected NeighborRelation getNeighborRelation(BlockChunkControl chunk, Vector3Int blockLocation) {
          Block neighborBlock = chunk.getBlock(blockLocation);
         if (neighborBlock == null) {
@@ -44,13 +49,21 @@ public abstract class BlockShape{
         return NeighborRelation.different;
     }
 
+    // TODO: is this related to letting light pass or is this related to letting the player pass through?
     private boolean isTransparent;
+    
+    // Mesh generation
     protected List<Vector3f> positions;
+    // Mesh generation
     protected List<Short> indices;
+    // Mesh generation
     protected List<Float> normals;
+    // Mesh generation
     protected List<Vector2f> textureCoordinates;
+    // Mesh generation
     protected List<Float> lightColors;
     
+    // Initialize for generating mesh
     public void prepare(boolean isTransparent, List<Vector3f> positions, List<Short> indices, List<Float> normals, List<Vector2f> textureCoordinates, List<Float> lightColors){
         this.positions = positions;
         this.indices = indices;
@@ -59,9 +72,15 @@ public abstract class BlockShape{
         this.lightColors = lightColors;
         this.isTransparent = isTransparent;
     }
+    
+    // Used to identify this shape for comparing to other shapes
     public abstract String getTypeName();
+    
+    // Add shape to chunk mesh
     public abstract void addTo(BlockChunkControl chunk, Vector3Int blockLocation);
     
+    // Combined logic for neighboring block covering face and transparency.
+    // TODO: understand this better.
     protected boolean shouldFaceBeAdded(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face){
         Block block = chunk.getBlock(blockLocation);
         BlockSkin blockSkin = block.getSkin(chunk, blockLocation, face);
@@ -73,9 +92,6 @@ public abstract class BlockShape{
                 neighborBlock = chunk.getTerrain().getBlock(neighborGlobalBlock);
             }
             if(neighborBlock != null){
-//                if (!neighborBlock.getClass().equals(this.getClass())) {
-//                    return true;
-//                }
                 BlockSkin neighborBlockSkin = neighborBlock.getSkin(chunk, blockLocation, face);
                 if(blockSkin.isTransparent() != neighborBlockSkin.isTransparent()){
                     return true;
@@ -83,36 +99,42 @@ public abstract class BlockShape{
                 BlockShape neighborShape = neighborBlock.getShape(chunk, neighborBlockLocation);
                 return (!(canBeMerged(face) && neighborShape.canBeMerged(BlockNavigator.getOppositeFace(face))));
             }
-            else {
-            }
             return true;
         }
         return false;
     }
     
+    // Return true if the face is exposed to the sky
+    // TODO: does this only apply to face up? if so it could be more efficent
     protected boolean isFaceAboveSurface(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face) {
         Vector3Int neighborBlock = chunk.getNeighborBlockGlobalLocation(blockLocation, face);
         BlockTerrainControl terrain = chunk.getTerrain();
         return terrain.getIsGlobalLocationAboveSurface(neighborBlock);
     }
     
+    // Get the brightness of a face direction by getting the light level of the neighboring block
     protected float getLightLevelOfFace(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face) {
-        if (blockLocation.getY() == 31 && face == Block.Face.Top) {
-            System.out.println("getting top");
-        }
         BlockTerrainControl terrain = chunk.getTerrain();
         boolean lightEnabled = terrain.getSettings().getLightsEnabled();
+        // If lights are not enabled, just light everything to max
         if (!lightEnabled) {
-            return 0.7f;
+            return 1.0f;
         }
-        Vector3Int neighborBlock = chunk.getNeighborBlockGlobalLocation(blockLocation, face);
-        byte sunlight = terrain.getSettings().getSunlightLevel();
         
+        // Get block in direction of face
+        Vector3Int neighborBlock = chunk.getNeighborBlockGlobalLocation(blockLocation, face);
+        // scale light depending on how strong the sun is configured to be.  This is 'max' light.
+        byte sunlight = terrain.getSettings().getSunlightLevel();
+
+        // Get how bright a given block is.
         byte lightLevel = terrain.getLightLevelOfBlock(neighborBlock);
-        byte maxLight = terrain.getSettings().getSunlightLevel();
+        
+        // Negitive lights are black.  This is never done intentionally.
         if (lightLevel < 0) {
             return 0;
         }
+        
+        // Some pre-defined light scales
         if (sunlight == 3) {
             switch (lightLevel) {
                 case 0: return 0.25f;
@@ -135,28 +157,19 @@ public abstract class BlockShape{
                  case 9: return 1f;
                  default: return 1f;
              }
-/*            switch (lightLevel) {
-                 case 0: return 0.1f;
-                 case 1: return 0.15f;
-                 case 2: return 0.2f;
-                 case 3: return 0.25f;
-                 case 4: return 0.3f;
-                 case 5: return 0.4f;
-                 case 6: return 0.5f;
-                 case 7: return 0.6f;
-                 case 8: return 0.8f;
-                 case 9: return 1f;
-                 default: return 1f;
-             }*/
         } else {
-            float lightFactor = ((float)lightLevel+1) / ((float)maxLight + 1);
+            // If not a pre-defined light, then make an aproximiation.
+            // TODO: Find a better algorithm that doesn't need the predefined sets.
+            float lightFactor = ((float)lightLevel+1) / ((float)sunlight + 1);
             return lightFactor;
         }
     }
 
-    
+    // Does the neighboring block cover the entire face of its square in the oposite direction?
+    // If this returns true, the current block may choose not to render the surface in this direction.
     protected abstract boolean canBeMerged(Block.Face face);
     
+    // Translate texture cordinates to be used on mesh
     protected Vector2f getTextureCoordinates(BlockChunkControl chunk, BlockSkin_TextureLocation textureLocation, float xUnitsToAdd, float yUnitsToAdd){
         float textureUnitX = (1f / chunk.getTerrain().getSettings().getTexturesCountX());
         float textureUnitY = (1f / chunk.getTerrain().getSettings().getTexturesCountY());

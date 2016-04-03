@@ -12,12 +12,15 @@ import com.jme3.math.Vector3f;
  */
 public class BlockNavigator{
     
+    // Get neighbor block location using coordinates local to the chunk.
+    // WARNING: May return a block location outside the chunk.
     public static Vector3Int getNeighborBlockLocalLocation(Vector3Int location, Block.Face face){
         Vector3Int neighborLocation = getNeighborBlockLocation_Relative(face);
         neighborLocation.addLocal(location);
         return neighborLocation;
     }
     
+    // Get location delta by direction
     public static Vector3Int getNeighborBlockLocation_Relative(Block.Face face){
         Vector3Int neighborLocation = new Vector3Int();
         switch(face){
@@ -48,6 +51,7 @@ public class BlockNavigator{
         return neighborLocation;
     }
     
+    // Reverse a direction
     public static Block.Face getOppositeFace(Block.Face face){
         switch(face){
             case Top:       return Block.Face.Bottom;
@@ -60,6 +64,11 @@ public class BlockNavigator{
         return null;
     }
     
+    // Get block at collision point, or neighboring block at collision point
+    // Used to determine which block to remove when picking
+    // Or where to place a block
+    // Does not check block state empty/clear.
+    // TODO test with more block types
     public static Vector3Int getPointedBlockLocation(BlockTerrainControl blockTerrain, Vector3f collisionContactPoint, boolean getNeighborLocation, Vector3f collisionNorm){
         Vector3f collisionLocation = Util.compensateFloatRoundingErrors(collisionContactPoint);
         double blockSize = (double)blockTerrain.getSettings().getBlockSize();
@@ -98,37 +107,22 @@ public class BlockNavigator{
                 if (getNeighborLocation) {
                      if (collisionNorm.x < 0) {
                         return blockLocation.subtract(xAdjust,0,0);
-//                        return blockLocation;//.add(1,0,0);
-                    } else if (collisionNorm.x > 0) {
-  //                      return blockLocation.subtract(1,0,0);
                     }
                     if (collisionNorm.y < 0) {
                         return blockLocation.subtract(0,yAdjust,0);
-    //                    return blockLocation;//.add(0,1,0);
-                    } else if (collisionNorm.y > 0) {
-      //                  return blockLocation.subtract(0,1,0);
                     }
                     if (collisionNorm.z < 0) {
                         return blockLocation.subtract(0,0,zAdjust);
-          //              return blockLocation;//.add(0,0,1);
-                    } else if (collisionNorm.z > 0) {
-        //                return blockLocation.subtract(0,0,1);
                     }
                     return blockLocation;
                 } else {
-                    if (collisionNorm.x < 0) {
-                        return blockLocation;//.add(1,0,0);
-                    } else if (collisionNorm.x > 0) {
+                    if (collisionNorm.x > 0) {
                         return blockLocation.subtract(xAdjust,0,0);
                     }
-                    if (collisionNorm.y < 0) {
-                        return blockLocation;//.add(0,1,0);
-                    } else if (collisionNorm.y > 0) {
+                    if (collisionNorm.y > 0) {
                         return blockLocation.subtract(0,yAdjust,0);
                     }
-                    if (collisionNorm.z < 0) {
-                        return blockLocation;//.add(0,0,1);
-                    } else if (collisionNorm.z > 0) {
+                    if (collisionNorm.z > 0) {
                         return blockLocation.subtract(0,0,zAdjust);
                     }
                     return blockLocation;

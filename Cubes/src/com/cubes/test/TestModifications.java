@@ -30,7 +30,7 @@ public class TestModifications extends SimpleApplication{
     public void simpleInitApp(){
         CubesTestAssets.registerBlocks();
         
-        blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int(2, 1, 2));
+        blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this));
         for(int x=0;x<32;x++){
             for(int z=0;z<16;z++){
                 int groundHeight = (int) ((Math.random() * 4) + 8);
