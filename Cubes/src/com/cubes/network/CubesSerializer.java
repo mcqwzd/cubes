@@ -16,10 +16,10 @@ import java.util.HashMap;
  */
 public class CubesSerializer{
     
-    public static HashMap<String, byte[]> writeChunksToBytes(BlockTerrainControl blockTerrain){
-        HashMap<String, BlockChunkControl> chunks = blockTerrain.getChunks();
-        HashMap<String, byte[]> bytes = new HashMap<String, byte[]>();
-        for (String chunkLocation :  chunks.keySet()) {
+    public static HashMap<Vector3Int, byte[]> writeChunksToBytes(BlockTerrainControl blockTerrain){
+        HashMap<Vector3Int, BlockChunkControl> chunks = blockTerrain.getChunks();
+        HashMap<Vector3Int, byte[]> bytes = new HashMap<Vector3Int, byte[]>();
+        for (Vector3Int chunkLocation :  chunks.keySet()) {
             BlockChunkControl chunk = chunks.get(chunkLocation);
             bytes.put(chunkLocation, writeToBytes(chunk));
         }

@@ -27,7 +27,7 @@ public class TestShapes extends SimpleApplication{
     public void simpleInitApp(){
         CubesTestAssets.registerBlocks();
         
-        BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int(1, 1, 1));
+        BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this));
         blockTerrain.setBlockArea(new Vector3Int(0, 0, 0), new Vector3Int(3, 1, 1), CubesTestAssets.BLOCK_STONE);
         blockTerrain.setBlock(new Vector3Int(0, 0, 2), CubesTestAssets.BLOCK_GRASS);
         blockTerrain.setBlock(new Vector3Int(0, 0, 1), CubesTestAssets.BLOCK_GRASS);

@@ -29,7 +29,7 @@ public class TestBlockModel extends SimpleApplication{
         CubesTestAssets.registerBlocks();
         CubesSettings cubeSettings = CubesTestAssets.getSettings(this);
         cubeSettings.setLightsEnabled(true);
-        BlockTerrainControl blockTerrain = new BlockTerrainControl(cubeSettings, new Vector3Int(11, 1, 10));
+        BlockTerrainControl blockTerrain = new BlockTerrainControl(cubeSettings);
         //new BlockModel("Models/cubes/castle/castle.j3o", new Block[]{CubesTestAssets.BLOCK_GRASS}).addToBlockTerrain(blockTerrain, new Vector3Int(), new Vector3Int(128, 100, 144));
         new BlockModel("Models/cubes/dragon/dragon.j3o", new Block[]{CubesTestAssets.BLOCK_GRASS}).addToBlockTerrain(blockTerrain, new Vector3Int(), new Vector3Int(112, 128, 128));
         //new BlockModel("Models/cubes/golem/golem.j3o", new Block[]{CubesTestAssets.BLOCK_GRASS}).addToBlockTerrain(blockTerrain, new Vector3Int(), new Vector3Int(176, 256, 160));

@@ -33,7 +33,7 @@ public class TestSerializeSlices extends SimpleApplication{
         CubesTestAssets.registerBlocks();
         
         // Create 'Original' block terrain
-        BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int(1, 1, 1));
+        BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this));
         blockTerrain.setBlocksFromNoise(new Vector3Int(0, 0, 0), new Vector3Int(16, 10, 16), 0.5f, CubesTestAssets.BLOCK_GRASS);
         Node terrainNode = new Node();
         terrainNode.addControl(blockTerrain);
@@ -41,14 +41,14 @@ public class TestSerializeSlices extends SimpleApplication{
         rootNode.attachChild(terrainNode);
         
         // Create full target block terrain
-        BlockTerrainControl blockTerrainClone = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int());
+        BlockTerrainControl blockTerrainClone = new BlockTerrainControl(CubesTestAssets.getSettings(this));
         Node terrainNodeClone = new Node();
         terrainNodeClone.addControl(blockTerrainClone);
         terrainNodeClone.setLocalTranslation(-20, 0, 0);
         rootNode.attachChild(terrainNodeClone);
 
         // Create slice target block terrain
-        BlockTerrainControl blockTerrainSliceClone = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int());
+        BlockTerrainControl blockTerrainSliceClone = new BlockTerrainControl(CubesTestAssets.getSettings(this));
         Node terrainSliceNodeClone = new Node();
         terrainSliceNodeClone.addControl(blockTerrainSliceClone);
         terrainSliceNodeClone.setLocalTranslation(-80, 0, 0);
@@ -70,6 +70,7 @@ public class TestSerializeSlices extends SimpleApplication{
         for (int i = slices.size()-1; i >= 0; --i) {
             blockTerrainSliceClone.readChunkPartial(slices.get(i));
         }
+        blockTerrainSliceClone.finishChunks();
                 
         terrainNodeClone.removeControl(blockTerrainClone);
         terrainNodeClone.addControl(blockTerrainClone);
@@ -77,11 +78,15 @@ public class TestSerializeSlices extends SimpleApplication{
         terrainSliceNodeClone.addControl(blockTerrainSliceClone);
 
         // Verify
-        byte[] serializedBlockTargetTerrain = CubesSerializer.writeToBytes(blockTerrainClone);
+        byte[] serializedBlockTargetTerrain = CubesSerializer.writeToBytes(blockTerrain);
+        byte[] serializedBlockCloneTerrain = CubesSerializer.writeToBytes(blockTerrainClone);
         byte[] serializedBlockSliceTerrain = CubesSerializer.writeToBytes(blockTerrainSliceClone);
         for (int compareI = 0; compareI < serializedBlockTargetTerrain.length; ++compareI) {
+            if (serializedBlockTargetTerrain[compareI] != serializedBlockCloneTerrain[compareI]) {
+                System.err.println(" Clone Coordinate does not match " + compareI );
+            }
             if (serializedBlockTargetTerrain[compareI] != serializedBlockSliceTerrain[compareI]) {
-                System.err.println(" Coordinate does not match " + compareI );
+                System.err.println(" Slice Coordinate does not match " + compareI );
             }
         }
         

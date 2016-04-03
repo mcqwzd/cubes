@@ -51,10 +51,6 @@ public class Vector3Int{
         return this;
     }
     
-    public boolean hasNegativeCoordinate(){
-        return ((x < 0) || (y < 0) || (z < 0));
-    }
-    
     public Vector3Int set(Vector3Int vector3Int){
         return set(vector3Int.getX(), vector3Int.getY(), vector3Int.getZ());
     }
@@ -115,6 +111,10 @@ public class Vector3Int{
     public Vector3Int mult(int x, int y, int z){
         return new Vector3Int(this.x * x, this.y * y, this.z * z);
     }
+
+    public Vector3Int mult(Vector3Int right){
+        return new Vector3Int(this.x * right.x, this.y * right.y, this.z * right.z);
+    }
     
     public Vector3Int negateLocal(){
         return multLocal(-1);
@@ -130,7 +130,13 @@ public class Vector3Int{
         this.z *= z;
         return this;
     }
-    
+
+    @Override
+    public int hashCode()
+    {
+        return (x << 8) ^ (z << 16) ^ (y << 24);
+    }
+
     @Override
     public Vector3Int clone(){
         return new Vector3Int(x, y, z);

@@ -14,6 +14,7 @@ import com.jme3.math.Vector2f;
 import com.jme3.system.AppSettings;
 import com.jme3.scene.Node;
 import com.cubes.*;
+import com.jme3.math.Triangle;
 
 public class TestPicking extends SimpleApplication implements ActionListener{
 
@@ -51,7 +52,7 @@ public class TestPicking extends SimpleApplication implements ActionListener{
     }
     
     private void initBlockTerrain(){
-        blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int(2, 1, 2));
+        blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this));
         blockTerrain.setBlockArea(new Vector3Int(0, 0, 0), new Vector3Int(32, 1, 32), CubesTestAssets.BLOCK_STONE);
         blockTerrain.setBlocksFromNoise(new Vector3Int(0, 1, 0), new Vector3Int(32, 5, 32), 0.5f, CubesTestAssets.BLOCK_GRASS);
         terrainNode = new Node();
@@ -103,7 +104,8 @@ public class TestPicking extends SimpleApplication implements ActionListener{
         CollisionResults results = getRayCastingResults(terrainNode);
         if(results.size() > 0){
             Vector3f collisionContactPoint = results.getClosestCollision().getContactPoint();
-            return BlockNavigator.getPointedBlockLocation(blockTerrain, collisionContactPoint, getNeighborLocation);
+            Vector3f norm = results.getClosestCollision().getTriangle(new Triangle()).getNormal();
+            return BlockNavigator.getPointedBlockLocation(blockTerrain, collisionContactPoint, getNeighborLocation, norm);
         }
         return null;
     }

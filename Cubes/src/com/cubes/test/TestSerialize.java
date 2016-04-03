@@ -28,7 +28,7 @@ public class TestSerialize extends SimpleApplication{
     public void simpleInitApp(){
         CubesTestAssets.registerBlocks();
         
-        BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int(1, 1, 1));
+        BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this));
         blockTerrain.setBlocksFromNoise(new Vector3Int(0, 0, 0), new Vector3Int(16, 10, 16), 0.5f, CubesTestAssets.BLOCK_GRASS);
         Node terrainNode = new Node();
         terrainNode.addControl(blockTerrain);
@@ -36,7 +36,7 @@ public class TestSerialize extends SimpleApplication{
         rootNode.attachChild(terrainNode);
         
         
-        BlockTerrainControl blockTerrainClone = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int());
+        BlockTerrainControl blockTerrainClone = new BlockTerrainControl(CubesTestAssets.getSettings(this));
         
         
         Node terrainNodeClone = new Node();

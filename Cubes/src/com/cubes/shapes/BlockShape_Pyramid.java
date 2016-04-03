@@ -137,4 +137,9 @@ public class BlockShape_Pyramid extends BlockShape{
     protected boolean canBeMerged(Block.Face face){
         return (face == Block.Face.Bottom);
     }
+
+    @Override
+    public String getTypeName() {
+        return "BlockShape_Pyramid";
+    }
 }
