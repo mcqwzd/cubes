@@ -481,8 +481,8 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
     void setSunlight(SunlightChunk sunlight) {
         this.sunlightChunk = sunlight;
         this.sunlightChunk.validateChunk(this.location);
-        this.addSunlights();
         if (sunlightChunk.isChunkUnderground(this)) {
+            this.addSunlights();
             return;
         }
         for (int iX = 0; iX < blockTypes.length; ++iX) {
@@ -495,6 +495,7 @@ public class BlockChunkControl extends AbstractControl implements BitSerializabl
                 }
             }
         }
+        this.addSunlights();
     }
     
     // Translate chane in sunlight into pending block light change

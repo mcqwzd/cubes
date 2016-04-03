@@ -24,6 +24,10 @@ public class BlockChunk_MeshOptimizer{
     private static float[] normals;
     private static float[] lightColors;
 
+    // Generate a single mesh of every block in a given chunk
+    // Using neighbor relations to remove faces that could never be seen
+    // the 'lightColors' is used to give the impression of light using shades of grey to imply darkness
+    // 
     public static Mesh generateOptimizedMesh(BlockChunkControl blockChunk, boolean isTransparent){
         LinkedList<Vector3f> positionsList = new LinkedList<Vector3f>();
         LinkedList<Short> indicesList = new LinkedList<Short>();

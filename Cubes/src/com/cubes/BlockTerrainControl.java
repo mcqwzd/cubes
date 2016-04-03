@@ -489,18 +489,22 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                 while (!chunksThatNeedUpdate.isEmpty() && (Calendar.getInstance().getTimeInMillis() - startTime) < 16 ) {
                     BlockChunkControl chunk = chunksThatNeedUpdate.get(0);
                     chunksThatNeedUpdate.remove(0);
-                    chunk.updateLights();
-                    wasUpdateNeeded = chunk.updateSpatial();
-                    if (wasUpdateNeeded) {
-                        for(int i=0;i<chunkListeners.size();i++){
-                            BlockChunkListener blockTerrainListener = chunkListeners.get(i);
-                            blockTerrainListener.onSpatialUpdated(chunk);
+                    if (chunk != null) {
+                        // TODO: find out why this rarely happens.
+                        // how is get(0) ever returning null?
+                        chunk.updateLights();
+                        wasUpdateNeeded = chunk.updateSpatial();
+                        if (wasUpdateNeeded) {
+                            for(int i=0;i<chunkListeners.size();i++){
+                                BlockChunkListener blockTerrainListener = chunkListeners.get(i);
+                                blockTerrainListener.onSpatialUpdated(chunk);
+                            }
                         }
-                    }
-                    chunksUpdated++;
-                    if (chunksUpdated >= chunksThatNeedUpdate.size()) {
-                        // Process at least half the remaining list so we don't get too far behind.
-                        break;
+                        chunksUpdated++;
+                        if (chunksUpdated >= chunksThatNeedUpdate.size()) {
+                            // Process at least half the remaining list so we don't get too far behind.
+                            break;
+                        }
                     }
                 }
             } finally {
