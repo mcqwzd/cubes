@@ -83,14 +83,14 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
     public void cubeAdd(BlockChunkControl chunk, Vector3Int blockLocation, NeighborRelation rTop, NeighborRelation rBottom, NeighborRelation rLeft, NeighborRelation rRight, NeighborRelation rFront, NeighborRelation rBack){
         Block block = chunk.getBlock(blockLocation);
         Vector3f blockLocation3f = new Vector3f(blockLocation.getX(), blockLocation.getY(), blockLocation.getZ());
-        Vector3f faceLoc_Bottom_TopLeft = blockLocation3f.add(new Vector3f((0.5f - extents[2]), (0.5f - extents[1]), (0.5f - extents[5])));
-        Vector3f faceLoc_Bottom_TopRight = blockLocation3f.add(new Vector3f((0.5f + extents[3]), (0.5f - extents[1]), (0.5f - extents[5])));
-        Vector3f faceLoc_Bottom_BottomLeft = blockLocation3f.add(new Vector3f((0.5f - extents[2]), (0.5f - extents[1]), (0.5f + extents[4])));
-        Vector3f faceLoc_Bottom_BottomRight = blockLocation3f.add(new Vector3f((0.5f + extents[3]), (0.5f - extents[1]), (0.5f + extents[4])));
-        Vector3f faceLoc_Top_TopLeft = blockLocation3f.add(new Vector3f((0.5f - extents[2]), (0.5f + extents[0]), (0.5f - extents[5])));
-        Vector3f faceLoc_Top_TopRight = blockLocation3f.add(new Vector3f((0.5f + extents[3]), (0.5f + extents[0]), (0.5f - extents[5])));
-        Vector3f faceLoc_Top_BottomLeft = blockLocation3f.add(new Vector3f((0.5f - extents[2]), (0.5f + extents[0]), (0.5f + extents[4])));
-        Vector3f faceLoc_Top_BottomRight = blockLocation3f.add(new Vector3f((0.5f + extents[3]), (0.5f + extents[0]), (0.5f + extents[4])));
+        Vector3f faceLoc_Bottom_TopLeft = blockLocation3f.add((0.5f - extents[2]), (0.5f - extents[1]), (0.5f - extents[5]));
+        Vector3f faceLoc_Bottom_TopRight = blockLocation3f.add((0.5f + extents[3]), (0.5f - extents[1]), (0.5f - extents[5]));
+        Vector3f faceLoc_Bottom_BottomLeft = blockLocation3f.add((0.5f - extents[2]), (0.5f - extents[1]), (0.5f + extents[4]));
+        Vector3f faceLoc_Bottom_BottomRight = blockLocation3f.add((0.5f + extents[3]), (0.5f - extents[1]), (0.5f + extents[4]));
+        Vector3f faceLoc_Top_TopLeft = blockLocation3f.add((0.5f - extents[2]), (0.5f + extents[0]), (0.5f - extents[5]));
+        Vector3f faceLoc_Top_TopRight = blockLocation3f.add((0.5f + extents[3]), (0.5f + extents[0]), (0.5f - extents[5]));
+        Vector3f faceLoc_Top_BottomLeft = blockLocation3f.add((0.5f - extents[2]), (0.5f + extents[0]), (0.5f + extents[4]));
+        Vector3f faceLoc_Top_BottomRight = blockLocation3f.add((0.5f + extents[3]), (0.5f + extents[0]), (0.5f + extents[4]));
         float lightColor = 0f;
         
         if(rTop == NeighborRelation.empty){
@@ -812,7 +812,7 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
         return true;
     }
 
-    private void addFaceIndices(List<Short> indices, int offset, float lightColor1, float lightColor2, float lightColor3){
+    private void addFaceIndices(LowAllocArray.ShortArray indices, int offset, float lightColor1, float lightColor2, float lightColor3){
         indices.add((short) (offset + 2));
         indices.add((short) (offset + 0));
         indices.add((short) (offset + 1));
@@ -827,7 +827,7 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
         }
     }
   
-    private void addSquareNormals(List<Float> normals, float x, float y, float z) {
+    private void addSquareNormals(LowAllocArray.FloatArray normals, float x, float y, float z) {
         for(int i=0;i<4;i++){
             normals.add(x);
             normals.add(y);
@@ -835,7 +835,7 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
         }
     }
     
-    private void addSquareNormals(List<Float> normals, Vector3f normal){
+    private void addSquareNormals(LowAllocArray.FloatArray normals, Vector3f normal){
         addSquareNormals(normals, normal.getX(), normal.getY(), normal.getZ());
     }
     
@@ -880,14 +880,14 @@ public class BlockShape_Rhombicuboctahedron extends BlockShape{
     private float largest(float a, float b, float c, float d) {
         return Math.max(Math.max(a,b), Math.max(c,d));
     }
-    private void addTextureCoordinates(BlockChunkControl chunk, List<Vector2f> textureCoordinates, BlockSkin_TextureLocation textureLocation){
+    private void addTextureCoordinates(BlockChunkControl chunk, LowAllocArray.Vector2fArray textureCoordinates, BlockSkin_TextureLocation textureLocation){
         textureCoordinates.add(getTextureCoordinates(chunk, textureLocation, 0, 0));
         textureCoordinates.add(getTextureCoordinates(chunk, textureLocation, 1, 0));
         textureCoordinates.add(getTextureCoordinates(chunk, textureLocation, 0, 1));
         textureCoordinates.add(getTextureCoordinates(chunk, textureLocation, 1, 1));
     }
 
-    private void addTextureCoordinates(Vector3f point1, Vector3f point2, Vector3f point3, Vector3f point4, Block.Face face, Vector3Int blockLocation, BlockChunkControl chunk, List<Vector2f> textureCoordinates, BlockSkin_TextureLocation textureLocation){
+    private void addTextureCoordinates(Vector3f point1, Vector3f point2, Vector3f point3, Vector3f point4, Block.Face face, Vector3Int blockLocation, BlockChunkControl chunk, LowAllocArray.Vector2fArray textureCoordinates, BlockSkin_TextureLocation textureLocation){
         switch (face) {
             case Top:
             case Bottom:

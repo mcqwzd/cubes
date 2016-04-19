@@ -29,7 +29,7 @@ public class TestSerialize extends SimpleApplication{
         CubesTestAssets.registerBlocks();
         
         BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this));
-        blockTerrain.setBlocksFromNoise(new Vector3Int(0, 0, 0), new Vector3Int(16, 10, 16), 0.5f, CubesTestAssets.BLOCK_GRASS);
+        blockTerrain.setBlocksFromNoise(Vector3Int.create(0, 0, 0), Vector3Int.create(16, 10, 16), 0.5f, CubesTestAssets.BLOCK_GRASS);
         Node terrainNode = new Node();
         terrainNode.addControl(blockTerrain);
         terrainNode.setLocalTranslation(40, 0, 0);
@@ -63,15 +63,15 @@ public class TestSerialize extends SimpleApplication{
 
         /*    
         // Create 'Original' block terrain
-        BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int(1, 1, 1));
-        blockTerrain.setBlocksFromNoise(new Vector3Int(0, 0, 0), new Vector3Int(16, 10, 16), 0.5f, CubesTestAssets.BLOCK_GRASS);
+        BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this), Vector3Int.create(1, 1, 1));
+        blockTerrain.setBlocksFromNoise(Vector3Int.create(0, 0, 0), Vector3Int.create(16, 10, 16), 0.5f, CubesTestAssets.BLOCK_GRASS);
         Node terrainNode = new Node();
         terrainNode.addControl(blockTerrain);
         terrainNode.setLocalTranslation(40, 0, 0);
         rootNode.attachChild(terrainNode);
         
         // Create 'target' block terrain
-        BlockTerrainControl blockTerrainClone = new BlockTerrainControl(CubesTestAssets.getSettings(this), new Vector3Int());
+        BlockTerrainControl blockTerrainClone = new BlockTerrainControl(CubesTestAssets.getSettings(this), Vector3Int.create());
         Node terrainNodeClone = new Node();
         terrainNodeClone.addControl(blockTerrainClone);
         terrainNodeClone.setLocalTranslation(-40, 0, 0);

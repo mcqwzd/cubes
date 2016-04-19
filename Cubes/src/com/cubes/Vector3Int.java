@@ -4,25 +4,86 @@
  */
 package com.cubes;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.Semaphore;
+
 /**
  *
  * @author Carl
  */
 public class Vector3Int{
-
-    public Vector3Int(int x, int y, int z){
+    private static Semaphore sem = new Semaphore(1, false); 
+    private static int MAX_POOL_SIZE = 100000;
+    private static Vector3Int[] pool = new Vector3Int[MAX_POOL_SIZE];
+    private static int length = 0;
+    private static Vector3Int poll() {
+        Vector3Int returnVal = null;
+        try {
+            sem.acquire();
+            if (length > 0) {
+                returnVal = pool[--length];
+            }
+            sem.release();
+        } catch (InterruptedException ex) {            
+            System.err.println("Failed to aquire Vector3Int semaphore");
+        }
+        return returnVal;
+    }
+    private static void offer(Vector3Int v) {
+        try {
+            sem.acquire();
+            if (length < MAX_POOL_SIZE) {
+               pool[length++] = v;
+            }
+            sem.release();
+        } catch (InterruptedException ex) {            
+            System.err.println("Failed to aquire Vector3Int semaphore");
+        }
+    }
+    // For debugging double deallocations if needed.
+    //private static ConcurrentLinkedQueue<Vector3Int> pool = new ConcurrentLinkedQueue<Vector3Int>();
+    public static Vector3Int create() {
+        return create(0,0,0);
+    }
+    public static Vector3Int create(int x, int y, int z) {
+        Vector3Int reuse = /*pool.*/poll();
+        if (reuse != null) {
+            reuse.set(x,y,z);
+            return reuse;
+        } else {
+            return new Vector3Int(x,y,z);
+        }
+    }
+    public static void dispose(Vector3Int v) {
+        //chunkAccessMutex.lock();
+        //v.x = v.counter;
+        //v.y = v.counter;
+        //v.z = v.counter;
+        //if (pool.contains(v)){
+        //    System.err.println("DISPOSED TWICE");
+        //}
+        //chunkAccessMutex.unlock();
+        /*pool.*/offer(v);
+    }
+    private Vector3Int(int x, int y, int z){
         this();
         this.x = x;
         this.y = y;
         this.z = z;
     }
 
-    public Vector3Int(){
-        
+    private Vector3Int(){
+        //chunkAccessMutex.lock();
+        //counter = ++gCounter;
+        //chunkAccessMutex.unlock();
     }
     private int x;
     private int y;
     private int z;
+    //static private int gCounter = 0;
+    //private int counter;
 
     public int getX(){
         return x;
@@ -67,7 +128,7 @@ public class Vector3Int{
     }
     
     public Vector3Int add(int x, int y, int z){
-        return new Vector3Int(this.x + x, this.y + y, this.z + z);
+        return create(this.x + x, this.y + y, this.z + z);
     }
     
     public Vector3Int addLocal(Vector3Int vector3Int){
@@ -86,7 +147,7 @@ public class Vector3Int{
     }
     
     public Vector3Int subtract(int x, int y, int z){
-        return new Vector3Int(this.x - x, this.y - y, this.z - z);
+        return create(this.x - x, this.y - y, this.z - z);
     }
     
     public Vector3Int subtractLocal(Vector3Int vector3Int){
@@ -109,11 +170,11 @@ public class Vector3Int{
     }
     
     public Vector3Int mult(int x, int y, int z){
-        return new Vector3Int(this.x * x, this.y * y, this.z * z);
+        return create(this.x * x, this.y * y, this.z * z);
     }
 
     public Vector3Int mult(Vector3Int right){
-        return new Vector3Int(this.x * right.x, this.y * right.y, this.z * right.z);
+        return create(this.x * right.x, this.y * right.y, this.z * right.z);
     }
     
     public Vector3Int negateLocal(){
@@ -139,7 +200,7 @@ public class Vector3Int{
 
     @Override
     public Vector3Int clone(){
-        return new Vector3Int(x, y, z);
+        return create(x, y, z);
     }
 
     @Override

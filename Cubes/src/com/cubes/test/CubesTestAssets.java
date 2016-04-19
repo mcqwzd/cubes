@@ -36,7 +36,7 @@ public class CubesTestAssets{
             new BlockSkin(new BlockSkin_TextureLocation(2, 0), false)
         }){
     {
-        setShapes(new BlockShape_Rhombicuboctahedron());
+        //setShapes(new BlockShape_Rhombicuboctahedron());
     }
 
         @Override

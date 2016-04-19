@@ -30,7 +30,7 @@ public class TestNoise extends SimpleApplication{
         CubesTestAssets.initializeEnvironment(this);
         
         BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this));
-        blockTerrain.setBlocksFromNoise(new Vector3Int(0, 0, 0), new Vector3Int(64, 50, 64), 0.3f, CubesTestAssets.BLOCK_GRASS);
+        blockTerrain.setBlocksFromNoise(Vector3Int.create(0, 0, 0), Vector3Int.create(64, 50, 64), 0.3f, CubesTestAssets.BLOCK_GRASS);
         Node terrainNode = new Node();
         terrainNode.addControl(blockTerrain);
         terrainNode.setShadowMode(RenderQueue.ShadowMode.CastAndReceive);

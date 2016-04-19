@@ -25,19 +25,19 @@ public class BlockShape_Cuboid extends BlockShape{
     public void addTo(BlockChunkControl chunk, Vector3Int blockLocation){
         Block block = chunk.getBlock(blockLocation);
         Vector3f blockLocation3f = new Vector3f(blockLocation.getX(), blockLocation.getY(), blockLocation.getZ());
-        Vector3f faceLoc_Bottom_TopLeft = blockLocation3f.add(new Vector3f((0.5f - extents[2]), (0.5f - extents[1]), (0.5f - extents[5])));
-        Vector3f faceLoc_Bottom_TopRight = blockLocation3f.add(new Vector3f((0.5f + extents[3]), (0.5f - extents[1]), (0.5f - extents[5])));
-        Vector3f faceLoc_Bottom_BottomLeft = blockLocation3f.add(new Vector3f((0.5f - extents[2]), (0.5f - extents[1]), (0.5f + extents[4])));
-        Vector3f faceLoc_Bottom_BottomRight = blockLocation3f.add(new Vector3f((0.5f + extents[3]), (0.5f - extents[1]), (0.5f + extents[4])));
-        Vector3f faceLoc_Top_TopLeft = blockLocation3f.add(new Vector3f((0.5f - extents[2]), (0.5f + extents[0]), (0.5f - extents[5])));
-        Vector3f faceLoc_Top_TopRight = blockLocation3f.add(new Vector3f((0.5f + extents[3]), (0.5f + extents[0]), (0.5f - extents[5])));
-        Vector3f faceLoc_Top_BottomLeft = blockLocation3f.add(new Vector3f((0.5f - extents[2]), (0.5f + extents[0]), (0.5f + extents[4])));
-        Vector3f faceLoc_Top_BottomRight = blockLocation3f.add(new Vector3f((0.5f + extents[3]), (0.5f + extents[0]), (0.5f + extents[4])));
+        Vector3f faceLoc_Bottom_TopLeft = blockLocation3f.add((0.5f - extents[2]), (0.5f - extents[1]), (0.5f - extents[5]));
+        Vector3f faceLoc_Bottom_TopRight = blockLocation3f.add((0.5f + extents[3]), (0.5f - extents[1]), (0.5f - extents[5]));
+        Vector3f faceLoc_Bottom_BottomLeft = blockLocation3f.add((0.5f - extents[2]), (0.5f - extents[1]), (0.5f + extents[4]));
+        Vector3f faceLoc_Bottom_BottomRight = blockLocation3f.add((0.5f + extents[3]), (0.5f - extents[1]), (0.5f + extents[4]));
+        Vector3f faceLoc_Top_TopLeft = blockLocation3f.add((0.5f - extents[2]), (0.5f + extents[0]), (0.5f - extents[5]));
+        Vector3f faceLoc_Top_TopRight = blockLocation3f.add((0.5f + extents[3]), (0.5f + extents[0]), (0.5f - extents[5]));
+        Vector3f faceLoc_Top_BottomLeft = blockLocation3f.add((0.5f - extents[2]), (0.5f + extents[0]), (0.5f + extents[4]));
+        Vector3f faceLoc_Top_BottomRight = blockLocation3f.add((0.5f + extents[3]), (0.5f + extents[0]), (0.5f + extents[4]));
         float lightColor = 0f;
         
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Top)){
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Top);
-            addFaceIndices(indices, positions.size(), lightColor, lightColor, lightColor);
+            addFaceIndices(positions.size(), lightColor, lightColor, lightColor);
             positions.add(faceLoc_Top_BottomLeft);
             positions.add(faceLoc_Top_BottomRight);
             positions.add(faceLoc_Top_TopLeft);
@@ -47,7 +47,7 @@ public class BlockShape_Cuboid extends BlockShape{
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Bottom)){
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Bottom);
-            addFaceIndices(indices, positions.size(), lightColor, lightColor, lightColor);
+            addFaceIndices(positions.size(), lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_BottomRight);
             positions.add(faceLoc_Bottom_BottomLeft);
             positions.add(faceLoc_Bottom_TopRight);
@@ -57,7 +57,7 @@ public class BlockShape_Cuboid extends BlockShape{
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Left)){
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Left);
-            addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
+            addFaceIndices(positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_TopLeft);
             positions.add(faceLoc_Bottom_BottomLeft);
             positions.add(faceLoc_Top_TopLeft);
@@ -67,7 +67,7 @@ public class BlockShape_Cuboid extends BlockShape{
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Right)){
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Right);
-            addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
+            addFaceIndices(positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_BottomRight);
             positions.add(faceLoc_Bottom_TopRight);
             positions.add(faceLoc_Top_BottomRight);
@@ -77,7 +77,7 @@ public class BlockShape_Cuboid extends BlockShape{
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Front)){
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Front);
-            addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
+            addFaceIndices(positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_BottomLeft);
             positions.add(faceLoc_Bottom_BottomRight);
             positions.add(faceLoc_Top_BottomLeft);
@@ -87,7 +87,7 @@ public class BlockShape_Cuboid extends BlockShape{
         }
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Back)){
             lightColor = getLightLevelOfFace(chunk, blockLocation, Block.Face.Back);
-            addFaceIndices(indices, positions.size(),  lightColor, lightColor, lightColor);
+            addFaceIndices(positions.size(),  lightColor, lightColor, lightColor);
             positions.add(faceLoc_Bottom_TopRight);
             positions.add(faceLoc_Bottom_TopLeft);
             positions.add(faceLoc_Top_TopRight);
@@ -97,7 +97,7 @@ public class BlockShape_Cuboid extends BlockShape{
         }
     }
 
-    private void addFaceIndices(List<Short> indices, int offset, float lightColor1, float lightColor2, float lightColor3){
+    private void addFaceIndices(/*LowAllocArray.ShortArray indices, */int offset, float lightColor1, float lightColor2, float lightColor3){
         indices.add((short) (offset + 2));
         indices.add((short) (offset + 0));
         indices.add((short) (offset + 1));
@@ -112,7 +112,7 @@ public class BlockShape_Cuboid extends BlockShape{
         }
     }
   
-    private void addSquareNormals(List<Float> normals, float normalX, float normalY, float normalZ){
+    private void addSquareNormals(LowAllocArray.FloatArray normals, float normalX, float normalY, float normalZ){
         for(int i=0;i<4;i++){
             normals.add(normalX);
             normals.add(normalY);
@@ -120,7 +120,7 @@ public class BlockShape_Cuboid extends BlockShape{
         }
     }
 
-    private void addTextureCoordinates(BlockChunkControl chunk, List<Vector2f> textureCoordinates, BlockSkin_TextureLocation textureLocation){
+    private void addTextureCoordinates(BlockChunkControl chunk, LowAllocArray.Vector2fArray textureCoordinates, BlockSkin_TextureLocation textureLocation){
         textureCoordinates.add(getTextureCoordinates(chunk, textureLocation, 0, 0));
         textureCoordinates.add(getTextureCoordinates(chunk, textureLocation, 1, 0));
         textureCoordinates.add(getTextureCoordinates(chunk, textureLocation, 0, 1));

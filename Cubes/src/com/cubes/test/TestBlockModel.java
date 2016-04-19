@@ -30,9 +30,9 @@ public class TestBlockModel extends SimpleApplication{
         CubesSettings cubeSettings = CubesTestAssets.getSettings(this);
         cubeSettings.setLightsEnabled(true);
         BlockTerrainControl blockTerrain = new BlockTerrainControl(cubeSettings);
-        //new BlockModel("Models/cubes/castle/castle.j3o", new Block[]{CubesTestAssets.BLOCK_GRASS}).addToBlockTerrain(blockTerrain, new Vector3Int(), new Vector3Int(128, 100, 144));
-        new BlockModel("Models/cubes/dragon/dragon.j3o", new Block[]{CubesTestAssets.BLOCK_GRASS}).addToBlockTerrain(blockTerrain, new Vector3Int(), new Vector3Int(112, 128, 128));
-        //new BlockModel("Models/cubes/golem/golem.j3o", new Block[]{CubesTestAssets.BLOCK_GRASS}).addToBlockTerrain(blockTerrain, new Vector3Int(), new Vector3Int(176, 256, 160));
+        //new BlockModel("Models/cubes/castle/castle.j3o", new Block[]{CubesTestAssets.BLOCK_GRASS}).addToBlockTerrain(blockTerrain, Vector3Int.create(), Vector3Int.create(128, 100, 144));
+        new BlockModel("Models/cubes/dragon/dragon.j3o", new Block[]{CubesTestAssets.BLOCK_GRASS}).addToBlockTerrain(blockTerrain, Vector3Int.create(), Vector3Int.create(112, 128, 128));
+        //new BlockModel("Models/cubes/golem/golem.j3o", new Block[]{CubesTestAssets.BLOCK_GRASS}).addToBlockTerrain(blockTerrain, Vector3Int.create(), Vector3Int.create(176, 256, 160));
         Node terrainNode = new Node();
         terrainNode.addControl(blockTerrain);
         rootNode.attachChild(terrainNode);

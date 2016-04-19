@@ -54,7 +54,7 @@ public class CubesSettings{
     private int chunkViewZ = 5;
     
     public Vector3Int getChunkViewDistance() {
-        return new Vector3Int(chunkViewX, chunkViewY, chunkViewZ);
+        return Vector3Int.create(chunkViewX, chunkViewY, chunkViewZ);
     }
 
     // Accessor for assetManager

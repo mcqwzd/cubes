@@ -28,8 +28,8 @@ public class TestHeightmap extends SimpleApplication{
         CubesTestAssets.registerBlocks();
         
         BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this));
-        blockTerrain.setBlockArea(new Vector3Int(0, 0, 0), new Vector3Int(64, 1, 64), CubesTestAssets.BLOCK_STONE);
-        blockTerrain.setBlocksFromHeightmap(new Vector3Int(0, 1, 0), "Textures/cubes/heightmap.jpg", 20, CubesTestAssets.BLOCK_GRASS);
+        blockTerrain.setBlockArea(Vector3Int.create(0, 0, 0), Vector3Int.create(64, 1, 64), CubesTestAssets.BLOCK_STONE);
+        blockTerrain.setBlocksFromHeightmap(Vector3Int.create(0, 1, 0), "Textures/cubes/heightmap.jpg", 20, CubesTestAssets.BLOCK_GRASS);
         Node terrainNode = new Node();
         terrainNode.addControl(blockTerrain);
         rootNode.attachChild(terrainNode);

@@ -17,10 +17,10 @@ public class BlockShape_Pyramid extends BlockShape{
     public void addTo(BlockChunkControl chunk, Vector3Int blockLocation){
         Block block = chunk.getBlock(blockLocation);
         Vector3f blockLocation3f = new Vector3f(blockLocation.getX(), blockLocation.getY(), blockLocation.getZ());
-        Vector3f faceLoc_Bottom_TopLeft = blockLocation3f.add(new Vector3f(0, 0, 0));
-        Vector3f faceLoc_Bottom_TopRight = blockLocation3f.add(new Vector3f(1, 0, 0));
-        Vector3f faceLoc_Bottom_BottomLeft = blockLocation3f.add(new Vector3f(0, 0, 1));
-        Vector3f faceLoc_Bottom_BottomRight = blockLocation3f.add(new Vector3f(1, 0, 1));
+        Vector3f faceLoc_Bottom_TopLeft = blockLocation3f.add(0, 0, 0);
+        Vector3f faceLoc_Bottom_TopRight = blockLocation3f.add(1, 0, 0);
+        Vector3f faceLoc_Bottom_BottomLeft = blockLocation3f.add(0, 0, 1);
+        Vector3f faceLoc_Bottom_BottomRight = blockLocation3f.add(1, 0, 1);
         Vector3f faceLoc_Top = blockLocation3f.add(new Vector3f(0.5f, 1, 0.5f));
         int indexOffset = positions.size();
         if(shouldFaceBeAdded(chunk, blockLocation, Block.Face.Bottom)){

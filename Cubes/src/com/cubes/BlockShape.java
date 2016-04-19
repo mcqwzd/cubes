@@ -15,6 +15,7 @@ import com.jme3.terrain.Terrain;
  * @author Carl
  */
 public abstract class BlockShape{
+
     // Enum to relate block to neighboring blocks
     protected enum NeighborRelation {
         empty,
@@ -23,14 +24,17 @@ public abstract class BlockShape{
     }
     // Compare block in one direction
     protected NeighborRelation getNeighborRelation(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face1) {
+        // TODO: dispose temp block location created here
         return getNeighborRelation(chunk, BlockNavigator.getNeighborBlockLocalLocation(blockLocation, face1));
     }
     // Compare block in two directions (diagnol line edge)
     protected NeighborRelation getNeighborRelation(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face1, Block.Face face2) {
+        // TODO: dispose temp block location created here
         return getNeighborRelation(chunk, BlockNavigator.getNeighborBlockLocalLocation(blockLocation, face2), face1);
     }
     // Compare block in three directions (corner point edge)
     protected NeighborRelation getNeighborRelation(BlockChunkControl chunk, Vector3Int blockLocation, Block.Face face1, Block.Face face2, Block.Face face3) {
+        // TODO: dispose temp block location created here
        return getNeighborRelation(chunk, BlockNavigator.getNeighborBlockLocalLocation(blockLocation, face3), face1, face2);
     }
     // Compare block by location
@@ -53,18 +57,23 @@ public abstract class BlockShape{
     private boolean isTransparent;
     
     // Mesh generation
-    protected List<Vector3f> positions;
+    protected LowAllocArray.Vector3fArray positions;
     // Mesh generation
-    protected List<Short> indices;
+    protected LowAllocArray.ShortArray indices;
     // Mesh generation
-    protected List<Float> normals;
+    protected LowAllocArray.FloatArray normals;
     // Mesh generation
-    protected List<Vector2f> textureCoordinates;
+    protected LowAllocArray.Vector2fArray textureCoordinates;
     // Mesh generation
-    protected List<Float> lightColors;
+    protected LowAllocArray.FloatArray lightColors;
     
     // Initialize for generating mesh
-    public void prepare(boolean isTransparent, List<Vector3f> positions, List<Short> indices, List<Float> normals, List<Vector2f> textureCoordinates, List<Float> lightColors){
+    public void prepare(boolean isTransparent, 
+            LowAllocArray.Vector3fArray positions,  
+            LowAllocArray.ShortArray  indices, 
+            LowAllocArray.FloatArray normals, 
+            LowAllocArray.Vector2fArray textureCoordinates, 
+            LowAllocArray.FloatArray lightColors){
         this.positions = positions;
         this.indices = indices;
         this.normals = normals;
@@ -72,6 +81,14 @@ public abstract class BlockShape{
         this.lightColors = lightColors;
         this.isTransparent = isTransparent;
     }
+    void reset() {
+        this.positions = null;
+        this.indices = null;
+        this.normals = null;
+        this.textureCoordinates = null;
+        this.lightColors = null;
+    }
+
     
     // Used to identify this shape for comparing to other shapes
     public abstract String getTypeName();
@@ -90,6 +107,7 @@ public abstract class BlockShape{
             if (neighborBlock == null) {
                 Vector3Int neighborGlobalBlock = chunk.getNeighborBlockGlobalLocation(blockLocation, face);
                 neighborBlock = chunk.getTerrain().getBlock(neighborGlobalBlock);
+                Vector3Int.dispose(neighborGlobalBlock);
             }
             if(neighborBlock != null){
                 BlockSkin neighborBlockSkin = neighborBlock.getSkin(chunk, blockLocation, face);
@@ -97,8 +115,10 @@ public abstract class BlockShape{
                     return true;
                 }
                 BlockShape neighborShape = neighborBlock.getShape(chunk, neighborBlockLocation);
+                Vector3Int.dispose(neighborBlockLocation);
                 return (!(canBeMerged(face) && neighborShape.canBeMerged(BlockNavigator.getOppositeFace(face))));
             }
+            Vector3Int.dispose(neighborBlockLocation);
             return true;
         }
         return false;

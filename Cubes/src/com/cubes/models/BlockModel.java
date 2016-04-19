@@ -35,7 +35,8 @@ public class BlockModel{
         Vector3f bounds = getBounds(spatial);
         Vector3f relativeBlockSize = new Vector3f((bounds.getX() / size.getX()), (bounds.getY() / size.getY()), (bounds.getZ() / size.getZ()));
         Geometry testBlockBox = new Geometry("addToBlockTErran", new Box(relativeBlockSize.divide(2), relativeBlockSize.getX(), relativeBlockSize.getY(), relativeBlockSize.getZ()));
-        Vector3Int tmpLocation = new Vector3Int();
+        Vector3Int tmpLocation = Vector3Int.create();
+        blockTerrain.writeLock("loading model terrain");
         for(int x=0;x<size.getX();x++){
             for(int y=0;y<size.getY();y++){
                 for(int z=0;z<size.getZ();z++){
@@ -55,6 +56,7 @@ public class BlockModel{
                 }
             }
         }
+        blockTerrain.writeUnlock("loading model terrain");
     }
     
     private Block getMaterialBlock(Material material){

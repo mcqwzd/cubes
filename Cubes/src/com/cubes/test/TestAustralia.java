@@ -31,7 +31,7 @@ public class TestAustralia extends SimpleApplication{
         CubesTestAssets.initializeWater(this);
         
         BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this));
-        blockTerrain.setBlocksFromHeightmap(new Vector3Int(0, 1, 0), "Textures/cubes/heightmap_australia.jpg", 10, CubesTestAssets.BLOCK_GRASS);
+        blockTerrain.setBlocksFromHeightmap(Vector3Int.create(0, 1, 0), "Textures/cubes/heightmap_australia.jpg", 10, CubesTestAssets.BLOCK_GRASS);
         Node terrainNode = new Node();
         terrainNode.addControl(blockTerrain);
         terrainNode.setShadowMode(RenderQueue.ShadowMode.CastAndReceive);

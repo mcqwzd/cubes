@@ -33,7 +33,7 @@ public class TestPhysics extends SimpleApplication implements ActionListener{
         settings.setTitle("Cubes Demo - Physics");
         settings.setFrameRate(60);
     }
-    private final Vector3Int terrainSize = new Vector3Int(100, 30, 100);
+    private final Vector3Int terrainSize = Vector3Int.create(100, 30, 100);
     private BulletAppState bulletAppState;
     private BetterCharacterControl playerControl;
     private Vector3f walkDirection = new Vector3f();
@@ -72,7 +72,7 @@ public class TestPhysics extends SimpleApplication implements ActionListener{
         
         cubesSettings = CubesTestAssets.getSettings(this);
         blockTerrain = new BlockTerrainControl(cubesSettings);
-        blockTerrain.setBlocksFromNoise(new Vector3Int(), terrainSize, 0.8f, CubesTestAssets.BLOCK_GRASS);
+        blockTerrain.setBlocksFromNoise(Vector3Int.create(), terrainSize, 0.8f, CubesTestAssets.BLOCK_GRASS);
         blockTerrain.addChunkListener(new BlockChunkListener(){
 
             @Override

@@ -36,32 +36,32 @@ public class TestTutorial extends SimpleApplication{
         //(Existing blocks will be replaced)
         boolean testTextureAssignment = false;
         if (testTextureAssignment) {
-            blockTerrain.setBlock(new Vector3Int(1, 3, 1), CubesTestAssets.BLOCK_COLOR);
-            blockTerrain.setBlock(new Vector3Int(1, 2, 1), CubesTestAssets.BLOCK_COLOR);
-            blockTerrain.setBlock(new Vector3Int(1, 1, 1), CubesTestAssets.BLOCK_COLOR);
-            blockTerrain.setBlock(new Vector3Int(1, 0, 1), CubesTestAssets.BLOCK_COLOR);
-            blockTerrain.setBlock(new Vector3Int(0, 0, 1), CubesTestAssets.BLOCK_COLOR);
-            blockTerrain.setBlock(new Vector3Int(1, 0, 0), CubesTestAssets.BLOCK_COLOR);
-            blockTerrain.setBlock(new Vector3Int(1, 0, 2), CubesTestAssets.BLOCK_COLOR);
-            blockTerrain.setBlock(new Vector3Int(2, 0, 1), CubesTestAssets.BLOCK_COLOR);
-            blockTerrain.setBlock(new Vector3Int(1, 0, 3), CubesTestAssets.BLOCK_COLOR);
-            blockTerrain.setBlock(new Vector3Int(3, 0, 1), CubesTestAssets.BLOCK_COLOR);
+            blockTerrain.setBlock(Vector3Int.create(1, 3, 1), CubesTestAssets.BLOCK_COLOR);
+            blockTerrain.setBlock(Vector3Int.create(1, 2, 1), CubesTestAssets.BLOCK_COLOR);
+            blockTerrain.setBlock(Vector3Int.create(1, 1, 1), CubesTestAssets.BLOCK_COLOR);
+            blockTerrain.setBlock(Vector3Int.create(1, 0, 1), CubesTestAssets.BLOCK_COLOR);
+            blockTerrain.setBlock(Vector3Int.create(0, 0, 1), CubesTestAssets.BLOCK_COLOR);
+            blockTerrain.setBlock(Vector3Int.create(1, 0, 0), CubesTestAssets.BLOCK_COLOR);
+            blockTerrain.setBlock(Vector3Int.create(1, 0, 2), CubesTestAssets.BLOCK_COLOR);
+            blockTerrain.setBlock(Vector3Int.create(2, 0, 1), CubesTestAssets.BLOCK_COLOR);
+            blockTerrain.setBlock(Vector3Int.create(1, 0, 3), CubesTestAssets.BLOCK_COLOR);
+            blockTerrain.setBlock(Vector3Int.create(3, 0, 1), CubesTestAssets.BLOCK_COLOR);
         }  else {
-            blockTerrain.setBlock(new Vector3Int(0, 0, 0), CubesTestAssets.BLOCK_WOOD);
-            blockTerrain.setBlock(new Vector3Int(0, 0, 1), CubesTestAssets.BLOCK_WOOD);
-            blockTerrain.setBlock(new Vector3Int(1, 0, 0), CubesTestAssets.BLOCK_WOOD);
-            blockTerrain.setBlock(new Vector3Int(1, 0, 1), CubesTestAssets.BLOCK_STONE);
+            blockTerrain.setBlock(Vector3Int.create(0, 0, 0), CubesTestAssets.BLOCK_WOOD);
+            blockTerrain.setBlock(Vector3Int.create(0, 0, 1), CubesTestAssets.BLOCK_WOOD);
+            blockTerrain.setBlock(Vector3Int.create(1, 0, 0), CubesTestAssets.BLOCK_WOOD);
+            blockTerrain.setBlock(Vector3Int.create(1, 0, 1), CubesTestAssets.BLOCK_STONE);
             blockTerrain.setBlock(0, 0, 0, CubesTestAssets.BLOCK_GRASS); //For the lazy users :P 
         }
         //You can place whole areas of blocks too: setBlockArea(location, size, block)
         //(The specified block will be cloned each time)
         //The following line will set 3 blocks on top of each other
         //({1,1,1}, {1,2,3} and {1,3,1})
-        blockTerrain.setBlockArea(new Vector3Int(1, 1, 1), new Vector3Int(1, 3, 1), CubesTestAssets.BLOCK_STONE);
+        blockTerrain.setBlockArea(Vector3Int.create(1, 1, 1), Vector3Int.create(1, 3, 1), CubesTestAssets.BLOCK_STONE);
 
         //Removing a block works in a similar way
-        blockTerrain.removeBlock(new Vector3Int(1, 2, 1));
-        blockTerrain.removeBlock(new Vector3Int(1, 3, 1));
+        blockTerrain.removeBlock(Vector3Int.create(1, 2, 1));
+        blockTerrain.removeBlock(Vector3Int.create(1, 3, 1));
 
         //The terrain is a jME-Control, you can add it
         //to a node of the scenegraph to display it

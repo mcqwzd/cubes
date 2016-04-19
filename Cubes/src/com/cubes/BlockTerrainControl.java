@@ -18,19 +18,40 @@ import com.jme3.math.Vector3f;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 /**
  *
  * @author Carl
+ */
+
+/**
+ * 
+ * TODO:
+ * Proformance:
+ * Delay rendering cube until neighboring cubes on all side are loaded.
+ * Count blocks durring generation and send a smaller 'all the blocks are X' message for blocks that only contain one type of block. (including air)
+ * when a block gets unloaded,  make sure its not sitting in any of the render queues
+ * when rendering blocks, create two mesh optimizers so we can have two threads rendering them.  One can be generating mesh while the other gens lights without conflicting on mutexes.
+ * if all the blocks are of one type and that one type is air, or is solid, short cut the mesh generation by skipping interior blocks.
+ * 
+ * Playability:
+ * freeze player physics if the player is in an unloaded chunk.
+ * don't let player 'fall' if they get stuck inside solid chunks.  
  */
 public class BlockTerrainControl extends AbstractControl implements BitSerializable{
 
@@ -46,14 +67,18 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         if (split.length != 3) {
             return null;
         }
-        return new Vector3Int(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+        return Vector3Int.create(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
     }
+    private ExecutorService renderPool;
     
     // Constructor
     public BlockTerrainControl(CubesSettings settings){
         this.settings = settings;
         chunks = new HashMap<Vector3Int, BlockChunkControl>();
-        chunksThatNeedUpdate = new ArrayList<BlockChunkControl> ();
+        chunksThatNeedUpdate = new ConcurrentLinkedQueue<BlockChunkControl>();
+        chunksReadyToRender = new ConcurrentLinkedQueue<BlockChunkControl>();
+        // This needs to remain a single executor until generate mesh static methods are made thread safe.
+        renderPool = Executors.newSingleThreadExecutor(); //newFixedThreadPool(4);
     }
     
     // Reference to settings
@@ -62,20 +87,71 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // Lock for multi threading support
     // TODO: Read/Write lock this sucker
     // TODO: find a thread safe way to subdivide some write operations like adding chunks vs updating chunks
-    private Lock chunkAccessMutex = new ReentrantLock(true);    
+    //private Lock chunkAccessMutex = new ReentrantLock(true);  
+    private ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(/*fairness*/false);
     private HashMap<Vector3Int, BlockChunkControl> chunks;
-    private List<BlockChunkControl> chunksThatNeedUpdate;
+    private Queue<BlockChunkControl> chunksThatNeedUpdate;
+    private Queue<BlockChunkControl> chunksReadyToRender;
+    //private List<BlockChunkControl> chunksReadyToRender;
     private HashMap<Vector3Int, SunlightChunk> sunlight = new HashMap<Vector3Int, SunlightChunk>();
     private ArrayList<BlockChunkListener> chunkListeners = new ArrayList<BlockChunkListener>();
+    private HashMap<String, Long> lockTimes;
+    public boolean readLockTry(String reason, long limitMS) {
+        //System.out.println("try locking " + reason + " at " + System.currentTimeMillis() % 10000);
+        try {
+            if (readWriteLock.readLock().tryLock(limitMS, TimeUnit.MILLISECONDS)) {
+                return true;
+            }
+        } catch (InterruptedException ex) {
+        }
+        System.out.println("Failed to lock for " + reason);
+        return false;
+    }
+    public void readLock(String reason) {
+        //lastReadLock = reason;
+        //System.out.println("locking " + reason + " at " + System.currentTimeMillis() % 10000);
+        long lockStart = System.currentTimeMillis();
+        readWriteLock.readLock().lock(); 
+        long lockFinish = System.currentTimeMillis();
+        if ((lockFinish - lockStart) > 32) {
+            System.err.println("read lock took " + (lockFinish - lockStart) + "ms for " + reason);
+        }
+    }
+    public void readUnlock(String reason) {
+        //System.out.println("unlocking " + reason + " at " + System.currentTimeMillis() % 10000);
+        readWriteLock.readLock().unlock();
+    }
+    private long lockStartTime = 0;
+    public void writeLock(String reason) {
+        if (readWriteLock.getReadHoldCount() > 0) {
+            System.err.println("FAILING to lock " + reason + "because current thread also read locked");
+        }
+        //System.err.println("Write locking " + reason + " at " + System.currentTimeMillis() % 10000);
+        lockStartTime = System.currentTimeMillis();
+        long lockStart = System.currentTimeMillis();
+        readWriteLock.writeLock().lock(); 
+        long lockFinish = System.currentTimeMillis();
+        if ((lockFinish - lockStart) > 32) {
+            System.err.println("write lock took " + (lockFinish - lockStart) + "ms to lock for " + reason);
+        }
+    }
+    public void writeUnlock(String reason) {
+        long endLockTime = System.currentTimeMillis();
+        if (endLockTime - lockStartTime > 32) {
+            System.err.println("Write lock consumed " + (endLockTime - lockStartTime) + "ms too " + reason );
+        }
+        //System.err.println("Write lock " + reason + " took " + (endLockTime - lockStartTime));
+        readWriteLock.writeLock().unlock();
+    }
     
     // If there isn't a chunk at a given location, create a new blank one
     private void initializeChunk(Vector3Int location) {
-        chunkAccessMutex.lock();
+        writeLock("initializeChunk");
         try {
             if (!chunks.containsKey(location)) {
                 BlockChunkControl chunk = new BlockChunkControl(this, location.getX(), location.getY(), location.getZ());
                 chunks.put(location, chunk);
-                Vector3Int sunlightKey = new Vector3Int(location.getX(), 0, location.getZ());
+                Vector3Int sunlightKey = Vector3Int.create(location.getX(), 0, location.getZ());
                 if (!sunlight.containsKey(sunlightKey)) {
                     SunlightChunk sl = new SunlightChunk(this, settings, location);
                     sunlight.put(sunlightKey, sl);
@@ -83,7 +159,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                 chunk.setSunlight(sunlight.get(sunlightKey));
             }
         } finally {
-            chunkAccessMutex.unlock();
+            writeUnlock("initializeChunk");
         }
     }
 
@@ -93,7 +169,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     public void setSpatial(Spatial spatial){
         Spatial oldSpatial = this.spatial;
         super.setSpatial(spatial);
-        chunkAccessMutex.lock();
+        readLock("setSpatial");
         try {
             for (Vector3Int chunk :  chunks.keySet()) {
                 if(spatial == null){
@@ -104,7 +180,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                 }
             }
         } finally {
-            chunkAccessMutex.unlock();
+            readUnlock("setSpatial");
         }
 
     }
@@ -120,7 +196,9 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
 
     @Override
     protected void controlUpdate(float lastTimePerFrame){
+        //System.gc();
         updateSpatial();
+        Thread.yield();
     }
 
     @Override
@@ -135,7 +213,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     
     // Get block via global coordinates
     public Block getBlock(int x, int y, int z){
-        return getBlock(new Vector3Int(x, y, z));
+        return getBlock(Vector3Int.create(x, y, z)); // TODO: Can this creation be avoided?
     }
     
     // Get block via global coordinates
@@ -150,7 +228,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
 
     // Helper method to set a cubic area to a block
     public void setBlockArea(Vector3Int location, Vector3Int size, Block block){
-        Vector3Int tmpLocation = new Vector3Int();
+        Vector3Int tmpLocation = Vector3Int.create();
         for(int x=0;x<size.getX();x++){
             for(int y=0;y<size.getY();y++){
                 for(int z=0;z<size.getZ();z++){
@@ -163,12 +241,12 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
 
     // set a block using global cordinates
     public void setBlock(int x, int y, int z, Block block){
-        setBlock(new Vector3Int(x, y, z), block);
+        setBlock(Vector3Int.create(x, y, z), block);
     }
     
     // set a block using global cordinates
     public void setBlock(Vector3Int location, Block block){
-        chunkAccessMutex.lock();
+        writeLock("setBlock");
         try {
             this.initializeChunk(this.getChunkLocation(location));
             BlockTerrain_LocalBlockState localBlockState = getLocalBlockState(location);
@@ -176,13 +254,13 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                 localBlockState.setBlock(block);
             }
         } finally {
-            chunkAccessMutex.unlock();
+            writeUnlock("setBlock");
         }
     }
     
     // Helper method to clear a cubic area to a block
     public void removeBlockArea(Vector3Int location, Vector3Int size){
-        Vector3Int tmpLocation = new Vector3Int();
+        Vector3Int tmpLocation = Vector3Int.create();
         for(int x=0;x<size.getX();x++){
             for(int y=0;y<size.getY();y++){
                 for(int z=0;z<size.getZ();z++){
@@ -195,7 +273,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
 
     // Set a block as air in global cordinate
     public void removeBlock(int x, int y, int z){
-        removeBlock(new Vector3Int(x, y, z));
+        removeBlock(Vector3Int.create(x, y, z));
     }
     
     // Set a block as air in global cordinate
@@ -219,18 +297,18 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // INTERNAL USE ONLY
     // Removes a light and propigates darkness
     // TODO: Batch process these
-    public void removeLightSource(HashMap<Vector3Int, LightQueueElement> lightsToRemove) {
+    public void removeLightSource(Collection<LightQueueElement> lightsToRemove) {
         if (lightsToRemove.size() == 0) {
             return;
         }
-        for (LightQueueElement element : lightsToRemove.values()) {
-            removeLightSource(getGlobalBlockLocation(element.getLocation(), element.getChunk()));
+        for (LightQueueElement element : lightsToRemove) {
+            removeLightSource(getGlobalBlockLocation(element.getLocation(), element.getChunk()));            
         }
      }
 
     // INTERNAL USE ONLY
     // Add a batch of light sources
-    public void addLightSource(HashMap<Vector3Int, LightQueueElement> lightsToAdd) {
+    public void addLightSource(Collection<LightQueueElement> lightsToAdd) {
         if (lightsToAdd.size() == 0) {
             return;
         }
@@ -250,7 +328,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         Queue<propigateElement> locationsToPropigateTo = new LinkedList<propigateElement>();
         Queue<propigateElement> next = new LinkedList<propigateElement>();
 
-        for (LightQueueElement element : lightsToAdd.values()) {
+        for (LightQueueElement element : lightsToAdd) {
             byte brightness = element.getLevel();
             boolean placeLight = element.getPlaceLight();
 
@@ -297,7 +375,9 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                         }
                     }
                 }
+                Vector3Int.dispose(localBlockLocation);
             }
+            Vector3Int.dispose(location);
             if (locationsToPropigateTo.size() == 0) {
                 locationsToPropigateTo = next;
                 next = new LinkedList<propigateElement>();
@@ -322,7 +402,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         byte oldLight = (byte)Math.max(chunk.getLightSourceAt(localBlockLocation), chunk.getLightAt(localBlockLocation));
         chunk.addLightSource(localBlockLocation, (byte)0);
 
-        HashMap<Vector3Int, LightQueueElement> lightsToReplace = new HashMap<Vector3Int, LightQueueElement>();
+        List<LightQueueElement> lightsToReplace = new ArrayList<LightQueueElement>();
         chunk.propigateDark(localBlockLocation, oldLight);//) {
         Queue<Vector3Int> locationsToPropigateTo = new LinkedList<Vector3Int>();
         Queue<Vector3Int> next = new LinkedList<Vector3Int>();
@@ -339,7 +419,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
             if (chunk != null) {
                 localBlockLocation = getLocalBlockLocation(location, chunk);
                 if (chunk.getLightSourceAt(localBlockLocation) > 0) {
-                    lightsToReplace.put(location, new LightQueueElement(localBlockLocation,chunk,chunk.getLightSourceAt(localBlockLocation),false));
+                    lightsToReplace.add(new LightQueueElement(localBlockLocation,chunk,chunk.getLightSourceAt(localBlockLocation),false));
                 } else if (chunk.propigateDark(localBlockLocation, oldLight)) {
                     for(int face = 0; face < Block.Face.values().length; face++){
                         Vector3Int neighborLocation = BlockNavigator.getNeighborBlockLocalLocation(location, Block.Face.values()[face]);
@@ -348,7 +428,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                 } else {
                     byte light = chunk.getLightAt(localBlockLocation);
                     if(light > 0) {
-                        lightsToReplace.put(location, new LightQueueElement(localBlockLocation,chunk,light,false));
+                        lightsToReplace.add(new LightQueueElement(localBlockLocation,chunk,light,false));
                     }
                 }
                 if (locationsToPropigateTo.size() == 0) {
@@ -357,40 +437,45 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                     oldLight--;
                 }
             }
+            Vector3Int.dispose(location);
         }
         addLightSource(lightsToReplace);
+        for (LightQueueElement e : lightsToReplace) {
+            Vector3Int.dispose(e.getLocation());
+        }
+
     }
     
     // using global block location, return the chunk it is in
     public BlockChunkControl getChunkByBlockLocation(Vector3Int blockLocation){
         Vector3Int chunkLocation = getChunkLocation(blockLocation);
-        return getChunkByChunkLocation(chunkLocation);
+        BlockChunkControl returnVal = getChunkByChunkLocation(chunkLocation);
+        Vector3Int.dispose(chunkLocation);
+        return returnVal;
     }
 
     // using chunk location, get chunk
     // TODO: move responsability to lock/unlock to caller
     public BlockChunkControl getChunkByChunkLocation(Vector3Int chunkLocation){
-        if(isValidChunkLocation(chunkLocation)){
-            BlockChunkControl chunk = null;
-            chunkAccessMutex.lock();
-            try {
-                chunk = chunks.get(chunkLocation);
-            } finally {
-                chunkAccessMutex.unlock();
-            }
-            return chunk;
+        BlockChunkControl chunk = null;
+        readLock("getChunkByChunkLocation");
+        try {
+            chunk = chunks.get(chunkLocation);
+        } finally {
+            readUnlock("getChunkByChunkLocation");
         }
-        return null;
+        return chunk;
     }
 
     // Check if chunk exists.
     public boolean isValidChunkLocation(Vector3Int location){
         boolean returnValue = false;
-        chunkAccessMutex.lock();
+        if (readWriteLock.getReadHoldCount() < 1) {
+            System.err.println("isValidChunkLocation called without locking");
+        }
         try {
             returnValue = chunks.containsKey(location);
         } finally {
-            chunkAccessMutex.unlock();
         }
         return returnValue;
     }
@@ -398,7 +483,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // Return true if the provided global location is exposed to sunlight
     public boolean getIsGlobalLocationAboveSurface(Vector3Int blockLocation) {
         boolean returnValue = false;
-        chunkAccessMutex.lock();
+        readLock("getIsGlobalLocationAboveSurface");
         try {
             Vector3Int chunkLoc = getChunkLocation(blockLocation);
             BlockChunkControl chunk = chunks.get(chunkLoc);
@@ -408,7 +493,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                 returnValue = chunk.isBlockAboveSurface(getLocalBlockLocation(blockLocation, chunk));
             }
         } finally {
-            chunkAccessMutex.unlock();
+            readUnlock("getIsGlobalLocationAboveSurface");
         }
         return returnValue;
     }
@@ -416,7 +501,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     /** Get chunk location from block location */
     // TODO: Move to blockNavigator
     public Vector3Int getChunkLocation(Vector3Int blockLocation){
-        Vector3Int chunkLocation = new Vector3Int();
+        Vector3Int chunkLocation = Vector3Int.create();
         Vector3Int copy = blockLocation.clone();
         // Negitive coordinates are 1 based.
         // Positive coordinates are 0 based.
@@ -449,7 +534,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // TODO: Move to blockNavigation
     // Get global location of block within chunk
     public static Vector3Int getGlobalBlockLocation(Vector3Int localLocation, BlockChunkControl chunk) {
-        Vector3Int globalLocation = new Vector3Int();
+        Vector3Int globalLocation = Vector3Int.create();
         if (localLocation.getZ() < 0) {
             localLocation = localLocation;
         }
@@ -464,7 +549,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // TODO: Move to blockNavigation
     // get local location of global block relative to given chunk
     public static Vector3Int getLocalBlockLocation(Vector3Int globalBlockLocation, BlockChunkControl chunk){
-        Vector3Int localLocation = new Vector3Int();
+        Vector3Int localLocation = Vector3Int.create();
         int localX = (globalBlockLocation.getX() - chunk.getBlockLocation().getX());
         int localY = (globalBlockLocation.getY() - chunk.getBlockLocation().getY());
         int localZ = (globalBlockLocation.getZ() - chunk.getBlockLocation().getZ());
@@ -472,58 +557,98 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         return localLocation;
     }
     
+    private boolean execThreadRunning = false;
     public boolean updateSpatial(){
 
         boolean wasUpdateNeeded = false;
         boolean hasLock = false;
-        try {
-            // This is called by render thread, so if lock can't be obtained within 10ms, then skip and try agian next frame.
-            hasLock = chunkAccessMutex.tryLock(10L, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ex) {
-            System.err.println("updateSpatial failed to tryLock");
+        List<String> debugLog = new ArrayList<String>();
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime;
+        if (startTime - lastSpatialUpdate > 30) {
+            System.out.println("Long time between frames " + (startTime - lastSpatialUpdate));
         }
+        hasLock = readLockTry("updateSpatial", 16);
         if (hasLock) {
+            int loopCount = 0;
             try {
                 int chunksUpdated = 0;
-                long startTime = Calendar.getInstance().getTimeInMillis();
-                while (!chunksThatNeedUpdate.isEmpty() && (Calendar.getInstance().getTimeInMillis() - startTime) < 16 ) {
-                    BlockChunkControl chunk = chunksThatNeedUpdate.get(0);
-                    chunksThatNeedUpdate.remove(0);
-                    if (chunk != null) {
-                        // TODO: find out why this rarely happens.
-                        // how is get(0) ever returning null?
-                        chunk.updateLights();
-                        wasUpdateNeeded = chunk.updateSpatial();
-                        if (wasUpdateNeeded) {
-                            for(int i=0;i<chunkListeners.size();i++){
-                                BlockChunkListener blockTerrainListener = chunkListeners.get(i);
-                                blockTerrainListener.onSpatialUpdated(chunk);
+                if ( !execThreadRunning && !chunksThatNeedUpdate.isEmpty()) {
+                    this.renderPool.execute(new Runnable() {
+                        public void run() {
+                            execThreadRunning = true;
+                            while (!chunksThatNeedUpdate.isEmpty()) {
+                                long innerStartTime = System.currentTimeMillis();
+                                final BlockChunkControl chunkToRender = chunksThatNeedUpdate.poll();
+                                long startTime = System.currentTimeMillis();
+                                // locks inside prepareMesh
+                                chunkToRender.prepareMeshs();
+                                // thread safe queue
+                                chunksReadyToRender.add(chunkToRender);
+                                long endTime = System.currentTimeMillis();
+                                if (endTime - innerStartTime > 32) {
+                                    System.err.println("background render took " + (endTime - startTime) + " to render ");
+                                }
+                                //Thread.yield();
                             }
+                            execThreadRunning = false;
                         }
-                        chunksUpdated++;
-                        if (chunksUpdated >= chunksThatNeedUpdate.size()) {
-                            // Process at least half the remaining list so we don't get too far behind.
-                            break;
+                    });
+                }
+                while (!chunksReadyToRender.isEmpty() && (System.currentTimeMillis() - startTime) < 16 ) {
+                    debugLog.add("" + System.currentTimeMillis() + " while start ");
+                    loopCount++;
+                    BlockChunkControl chunk = chunksReadyToRender.remove();
+                    if (chunk != null) {
+                        if (chunk.readyToRender()) {
+                            // TODO: find out why this rarely happens.
+                            // how is get(0) ever returning null?
+                            debugLog.add("" + System.currentTimeMillis() + " starting chunk " + chunk.lightsToAdd.size() + "." + chunk.lightsToRemove.size());
+                            //chunk.updateLights();
+                            //debugLog.add("" + System.currentTimeMillis() + " updated Lights remaining: " + chunk.lightsToAdd.size() + "." + chunk.lightsToRemove.size());
+                            wasUpdateNeeded = chunk.updateSpatial(debugLog);
+                            debugLog.add("" + System.currentTimeMillis() + " updated Spatial");
+                            if (wasUpdateNeeded) {
+                                debugLog.add("" + System.currentTimeMillis() + " update needed");
+                                for(int i=0;i<chunkListeners.size();i++){
+                                    BlockChunkListener blockTerrainListener = chunkListeners.get(i);
+                                    blockTerrainListener.onSpatialUpdated(chunk);
+                                    debugLog.add("" + System.currentTimeMillis() + " on spatial updated");
+                                }                            
+                            }
+                            chunksUpdated++;
+                            //if (chunksUpdated >= chunksReadyToRender.size()) {
+                                // Process at least half the remaining list so we don't get too far behind.
+                            //    break;
+                            //}
                         }
                     }
                 }
             } finally {
-                chunkAccessMutex.unlock();
+                readUnlock("updateSpatial");
+                endTime = System.currentTimeMillis();
+                if (endTime - startTime > 32) {
+                    for(String s : debugLog) {
+                        System.out.println(s);
+                    }
+                    System.out.println("terrain render took " + (endTime - startTime) + " to render " + loopCount + " iterations ");
+                }
             }
         }
+        this.lastSpatialUpdate = endTime;
         return wasUpdateNeeded;
     }
-    
+    private long lastSpatialUpdate = 0;
     // TODO: Understand this
     public void updateBlockMaterial(){
-        chunkAccessMutex.lock();
+        writeLock("updateBlockMaterial");
         try {       
             for (Vector3Int chunkLocation :  chunks.keySet()) {
                 BlockChunkControl chunk = chunks.get(chunkLocation);
                      chunk.updateBlockMaterial();
             }
         } finally {
-            chunkAccessMutex.unlock();
+            writeUnlock("updateBlockMaterial");
         }
     }
     
@@ -581,8 +706,8 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
 
     //Create terrain from height map image.  One block per pixel
     public void setBlocksFromHeightmap(Vector3Int location, int[][] heightmap, Block block){
-        Vector3Int tmpLocation = new Vector3Int();
-        Vector3Int tmpSize = new Vector3Int();
+        Vector3Int tmpLocation = Vector3Int.create();
+        Vector3Int tmpSize = Vector3Int.create();
         for(int x=0;x<heightmap.length;x++){
             for(int z=0;z<heightmap[0].length;z++){
                 tmpLocation.set(location.getX() + x, location.getY(), location.getZ() + z);
@@ -608,7 +733,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                 int blockHeight = ((int) ((blockHeightInPercents / 100) * size.getY())) + 1;
                 ---*/
                 int blockHeight = (((int) (((((row[z] - gridMinimum) * 100) / gridLargestDifference) / 100) * size.getY())) + 1);
-                Vector3Int tmpLocation = new Vector3Int();
+                Vector3Int tmpLocation = Vector3Int.create();
                 this.initializeChunk(this.getChunkLocation(tmpLocation));
                 for(int y=0;y<blockHeight;y++){
                     tmpLocation.set(location.getX() + x, location.getY() + y, location.getZ() + z);
@@ -621,7 +746,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // Set every other block for worst case performance.
     // (This probobly breaks with round blocks right now, needs more testing)
     public void setBlocksForMaximumFaces(Vector3Int location, Vector3Int size, Block block){
-        Vector3Int tmpLocation = new Vector3Int();
+        Vector3Int tmpLocation = Vector3Int.create();
         for(int x=0;x<size.getX();x++){
             for(int y=0;y<size.getY();y++){
                 for(int z=0;z<size.getZ();z++){
@@ -653,7 +778,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // TODO move to CubesSerializer
     @Override
     public void write(BitOutputStream outputStream){
-        chunkAccessMutex.lock();
+        readLock("Write Terrain");
         try {       
             outputStream.writeInteger(chunks.keySet().size());
             for (Vector3Int chunkLocation :  chunks.keySet()) {
@@ -664,7 +789,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                 chunk.write(outputStream);
             }
         } finally {
-            chunkAccessMutex.unlock();
+            readUnlock("Write Terrain");
         }
     }
 
@@ -672,7 +797,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // TODO move to CubesSerializer
     public ArrayList<byte[]> writeChunkPartials(Vector3Int chunkLoc) {
         ArrayList<byte[]> returnValue = new ArrayList<byte[]>();
-        chunkAccessMutex.lock();
+        readLock("Write Chunk Partials");
         try {       
             BlockChunkControl chunk = chunks.get(chunkLoc);
             for(int i = 0; i < settings.getChunkSizeY(); i++) {
@@ -689,7 +814,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                 returnValue.add(chunkBytes);
             }
         } finally {
-            chunkAccessMutex.unlock();
+            readUnlock("Write Chunk Partials");
         }
         return returnValue;
     }
@@ -698,7 +823,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // TODO move to CubesSerializer
     @Override
     public void read(BitInputStream inputStream) throws IOException{
-        chunkAccessMutex.lock();
+        writeLock("read terrain");
         try {       
             int chunkCount = inputStream.readInteger();
             while (chunkCount > 0) {
@@ -706,14 +831,14 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                 int chunkY = inputStream.readInteger();
                 int chunkZ = inputStream.readInteger();
                 Vector3Int chunkLocation;
-                chunkLocation = new Vector3Int(chunkX, chunkY, chunkZ);
+                chunkLocation = Vector3Int.create(chunkX, chunkY, chunkZ);
                 initializeChunk(chunkLocation);
                 BlockChunkControl chunk = chunks.get(chunkLocation);
                 chunk.read(inputStream);
                 --chunkCount;
             }
         } finally {
-            chunkAccessMutex.unlock();
+            writeUnlock("read terrain");
         }
     }
     
@@ -755,7 +880,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         boolean lastSlice = inputStream.readBoolean();
 
         Vector3Int chunkLocation;
-        chunkLocation = new Vector3Int(chunkX, chunkY, chunkZ);
+        chunkLocation = Vector3Int.create(chunkX, chunkY, chunkZ);
         if (!chunksInProgres.containsKey(chunkLocation)) {
             setChunkStarted(chunkLocation);
         }
@@ -763,26 +888,40 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         BlockChunkControl chunk = chunksInProgres.get(chunkLocation);
         chunk.read(chunkSlice, inputStream);
         if (lastSlice) {
-            chunkAccessMutex.lock();
+            writeLock("ReadChunkPartial Last slice");
+            long startTime = System.currentTimeMillis();
+            ArrayList<String> debugLog = new ArrayList<String>();
             try {
                 chunk.setLocation(this, chunkLocation);
-                chunk.updateSpatial();
+                debugLog.add("" + System.currentTimeMillis() + " setLocation");
+                //chunk.updateSpatial();
                 for (int x = -1; x < 2; ++x) {
                     for (int y = -1; y < 2; ++y) {
                         for (int z = -1; z < 2; ++z) {
                             markChunkNeedsUpdate(chunkLocation.add(x,y,z), true);
+                            debugLog.add("" + System.currentTimeMillis() + " mark Chunk");
                         }
                     }
                 }
-                Vector3Int sunlightKey = new Vector3Int(chunkLocation.getX(), 0, chunkLocation.getZ());
+                Vector3Int sunlightKey = Vector3Int.create(chunkLocation.getX(), 0, chunkLocation.getZ());
                 if (!sunlight.containsKey(sunlightKey)) {
+                    debugLog.add("" + System.currentTimeMillis() + " need to create sunlight");
                     SunlightChunk sl = new SunlightChunk(this, settings, chunkLocation);
+                    debugLog.add("" + System.currentTimeMillis() + " sunlight created");
                     sunlight.put(sunlightKey, sl);
                 }
                 chunk.setSunlight(sunlight.get(sunlightKey));
+                debugLog.add("" + System.currentTimeMillis() + " sunlight set");
                 finishedChunks.add(chunkLocation);
+                debugLog.add("" + System.currentTimeMillis() + " finish chunk added");
             } finally {
-                chunkAccessMutex.unlock();
+                if ((System.currentTimeMillis() - startTime) > 100) {
+                    for(String s : debugLog) {
+                        System.err.println("" + s);
+                    }
+                    System.err.println("That took too long");
+                }
+                writeUnlock("ReadChunkPartial Last slice");
             }
         }
         return lastSlice;
@@ -794,7 +933,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     private ArrayList<Vector3Int> finishedChunks = new ArrayList<Vector3Int>();
     public void finishChunks() {
         if(this.finishedChunks.size() > 0) {
-            chunkAccessMutex.lock();
+            writeLock("finishChunks");
             try {
                 if(this.finishedChunks.size() > 0) {
                     Vector3Int chunkKey = finishedChunks.get(0);
@@ -809,7 +948,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                     }
                 }
             } finally {
-                chunkAccessMutex.unlock();
+                writeUnlock("finishChunks");
             }
         }
     }
@@ -846,7 +985,7 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
 
     // Attach chunk to terrain
     public void setChunk(Vector3Int chunkLocation, BlockChunkControl chunk) {
-        chunkAccessMutex.lock();
+        writeLock("setChunk");
         try {       
             if (!chunks.containsKey(chunkLocation)) {
                 chunk.setLocation(this, chunkLocation);
@@ -855,27 +994,41 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
                 throw new UnsupportedOperationException("clearing old chunk not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
         } finally {
-            chunkAccessMutex.unlock();
+            writeUnlock("setChunk");
         }
     }
     
     // Remove all chunks maxDistance or more chunks away from chunkCenter
     // This is a square search.
     public void cullChunks(Vector3Int chunkCenter, int maxDistance) {
-        chunkAccessMutex.lock();
+        readLock("cullChunks");
         try {
             Set<Vector3Int> keys = new HashSet<Vector3Int>();
+            Set<Vector3Int> chunksToRemove = new HashSet<Vector3Int>();
             keys.addAll(chunks.keySet());
             for (Vector3Int key : keys) {
                 if ((Math.abs(key.getX() - chunkCenter.getX()) > maxDistance) || 
                     (Math.abs(key.getY() - chunkCenter.getY()) > maxDistance) || 
                     (Math.abs(key.getZ() - chunkCenter.getZ()) > maxDistance)) {
-                    this.removeChunk(key);
+                    chunksToRemove.add(key);
                 }
                         
             }
+            if (chunksToRemove.size() > 0) {
+               readUnlock("cullChunks");
+               writeLock("cullChunks Remove");
+               try {
+                    for (Vector3Int key : chunksToRemove) {
+                         this.removeChunk(key);
+                    }
+               } finally {
+                   writeUnlock("cullChunks Remove");
+                   readLock("cullChunks");
+               }
+            }
+            
         } finally {
-            chunkAccessMutex.unlock();
+            readUnlock("cullChunks");
         }
     }
     
@@ -898,8 +1051,8 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // TODO: move to blockNavigation
     public Vector3Int worldLocationToChunkLocation(Vector3f location) {
         // TODO: Assume terrain is at 0,0,0 ok?
-        Vector3Int blockLocation = new Vector3Int((int)(location.x / settings.getBlockSize()), (int)(location.y / settings.getBlockSize()), (int)(location.z / settings.getBlockSize()));
-        //Vector3Int chunkLocation = new Vector3Int(blockLocation.getX() / settings.getChunkSizeX(), blockLocation.getY() / settings.getChunkSizeY(), blockLocation.getZ() / settings.getChunkSizeZ() );
+        Vector3Int blockLocation = Vector3Int.create((int)(location.x / settings.getBlockSize()), (int)(location.y / settings.getBlockSize()), (int)(location.z / settings.getBlockSize()));
+        //Vector3Int chunkLocation = Vector3Int.create(blockLocation.getX() / settings.getChunkSizeX(), blockLocation.getY() / settings.getChunkSizeY(), blockLocation.getZ() / settings.getChunkSizeZ() );
          if(location.getX() < 0)
             blockLocation.setX(blockLocation.getX() - 1);
         if(location.getY() < 0)
@@ -917,8 +1070,8 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
         int globalBoxX = chunkX * settings.getChunkSizeX() + localBlockX;
         int chunkY = globalStartingY / settings.getChunkSizeY();
         //System.out.println("findNextBlockDown " + globalStartingY);
-        Vector3Int chunkLocation = new Vector3Int(chunkX, chunkY, chunkZ);
-        Vector3Int blockLocalLocation = new Vector3Int(localBlockX, globalStartingY % settings.getChunkSizeY(), localBlockZ);
+        Vector3Int chunkLocation = Vector3Int.create(chunkX, chunkY, chunkZ);
+        Vector3Int blockLocalLocation = Vector3Int.create(localBlockX, globalStartingY % settings.getChunkSizeY(), localBlockZ);
         if (globalStartingY < 0) {
             chunkY--;
         }
@@ -946,16 +1099,39 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
 
     // Update light across virtical block range
     void updateSunlightFromTo(int globalX, int globalZ, int startGlobalY, int endGlobalY) {
-        Vector3Int blockLoc = new Vector3Int(globalX, startGlobalY, globalZ);
-        int missingChunkCount = 0;
-        for(int i = startGlobalY; missingChunkCount < 5 && i <= endGlobalY; ++i) {
-            blockLoc.setY(i);
-            BlockChunkControl chunk = getChunkByBlockLocation(blockLoc);
-            if (chunk != null) {
-                Vector3Int localBlock = getLocalBlockLocation(blockLoc, chunk);
-                chunk.updateSunlight(localBlock.getX(), localBlock.getY(), localBlock.getZ());
-            } else {
-                missingChunkCount++;
+        if (startGlobalY <= Integer.MIN_VALUE + 10) {
+            Vector3Int blockLoc = Vector3Int.create(globalX, startGlobalY, globalZ);
+            int missingChunkCount = 0;
+            for(int i = endGlobalY; missingChunkCount < 5 ; --i) {
+                blockLoc.setY(i);
+                BlockChunkControl chunk = getChunkByBlockLocation(blockLoc);
+                if (chunk != null) {
+                    Vector3Int localBlock = getLocalBlockLocation(blockLoc, chunk);
+                    chunk.updateSunlight(localBlock.getX(), localBlock.getY(), localBlock.getZ());
+                    Vector3Int.dispose(localBlock);
+                } else {
+                    missingChunkCount++;
+                    if ((blockLoc.getY() + 1) % settings.getChunkSizeY() == 0) {
+                        i -= (settings.getChunkSizeY() - 1);
+                    }
+                }
+            }
+        } else {
+            Vector3Int blockLoc = Vector3Int.create(globalX, startGlobalY, globalZ);
+            int missingChunkCount = 0;
+            for(int i = startGlobalY; missingChunkCount < 5 && i <= endGlobalY; ++i) {
+                blockLoc.setY(i);
+                BlockChunkControl chunk = getChunkByBlockLocation(blockLoc);
+                if (chunk != null) {
+                    Vector3Int localBlock = getLocalBlockLocation(blockLoc, chunk);
+                    chunk.updateSunlight(localBlock.getX(), localBlock.getY(), localBlock.getZ());
+                    Vector3Int.dispose(localBlock);
+                } else {
+                    missingChunkCount++;
+                    if (blockLoc.getY() % settings.getChunkSizeY() == 0) {
+                        i += (settings.getChunkSizeY() - 1);
+                    }
+                }
             }
         }
     }
@@ -963,11 +1139,23 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // True if the given chunk location is in the chunkInProgress queue
     public boolean isPendingChunkLocation(Vector3Int location){
         boolean returnValue = false;
-        chunkAccessMutex.lock();
+        if (readWriteLock.getReadHoldCount() < 1) {
+            System.err.println("isPendingChunkLocation called without locking");
+        }
         try {
             returnValue = chunksInProgres.containsKey(location);
         } finally {
-            chunkAccessMutex.unlock();
+        }
+        return returnValue;
+    }
+    public int pendingChunkCount() {
+        int returnValue = 0;
+        if (readWriteLock.getReadHoldCount() < 1) {
+            System.err.println("isPendingChunkLocation called without locking");
+        }
+        try {
+            returnValue = chunksInProgres.keySet().size();
+        } finally {
         }
         return returnValue;
     }
@@ -975,16 +1163,14 @@ public class BlockTerrainControl extends AbstractControl implements BitSerializa
     // Put chunk in 'inprogress' state
     public void setChunkStarted(Vector3Int chunkLocation) {
         boolean returnValue = false;
-        chunkAccessMutex.lock();
+        writeLock("setChunkStarted");
         try {
             if (!chunksInProgres.containsKey(chunkLocation)) {
                 chunksInProgres.put(chunkLocation, new BlockChunkControl(this, chunkLocation.getX(), chunkLocation.getY(), chunkLocation.getZ()));
             }
-            System.out.println("Chunks in progress " + chunksInProgres.keySet().size());
         } finally {
-            chunkAccessMutex.unlock();
+            writeUnlock("setChunkStarted");
         }
 
     }
-
 }

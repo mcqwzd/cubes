@@ -53,8 +53,8 @@ public class TestPicking extends SimpleApplication implements ActionListener{
     
     private void initBlockTerrain(){
         blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this));
-        blockTerrain.setBlockArea(new Vector3Int(0, 0, 0), new Vector3Int(32, 1, 32), CubesTestAssets.BLOCK_STONE);
-        blockTerrain.setBlocksFromNoise(new Vector3Int(0, 1, 0), new Vector3Int(32, 5, 32), 0.5f, CubesTestAssets.BLOCK_GRASS);
+        blockTerrain.setBlockArea(Vector3Int.create(0, 0, 0), Vector3Int.create(32, 1, 32), CubesTestAssets.BLOCK_STONE);
+        blockTerrain.setBlocksFromNoise(Vector3Int.create(0, 1, 0), Vector3Int.create(32, 5, 32), 0.5f, CubesTestAssets.BLOCK_GRASS);
         terrainNode = new Node();
         terrainNode.addControl(blockTerrain);
         rootNode.attachChild(terrainNode);

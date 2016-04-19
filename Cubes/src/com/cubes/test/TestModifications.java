@@ -24,7 +24,7 @@ public class TestModifications extends SimpleApplication{
     }
     private BlockTerrainControl blockTerrain;
     private long lastModificationTimestamp;
-    private Vector3Int lastModificationLocation = new Vector3Int(0, 4, 15);
+    private Vector3Int lastModificationLocation = Vector3Int.create(0, 4, 15);
 
     @Override
     public void simpleInitApp(){

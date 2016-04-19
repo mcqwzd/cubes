@@ -34,7 +34,7 @@ public class TestSerializeSlices extends SimpleApplication{
         
         // Create 'Original' block terrain
         BlockTerrainControl blockTerrain = new BlockTerrainControl(CubesTestAssets.getSettings(this));
-        blockTerrain.setBlocksFromNoise(new Vector3Int(0, 0, 0), new Vector3Int(16, 10, 16), 0.5f, CubesTestAssets.BLOCK_GRASS);
+        blockTerrain.setBlocksFromNoise(Vector3Int.create(0, 0, 0), Vector3Int.create(16, 10, 16), 0.5f, CubesTestAssets.BLOCK_GRASS);
         Node terrainNode = new Node();
         terrainNode.addControl(blockTerrain);
         terrainNode.setLocalTranslation(40, 0, 0);
@@ -62,7 +62,7 @@ public class TestSerializeSlices extends SimpleApplication{
         
         // Ask original terrain to write blocks to a buffer        
         byte[] serializedBlockTerrain = CubesSerializer.writeToBytes(blockTerrain);
-        ArrayList<byte[]> slices = blockTerrain.writeChunkPartials(new Vector3Int(0,0,0));
+        ArrayList<byte[]> slices = blockTerrain.writeChunkPartials(Vector3Int.create(0,0,0));
         
         // Ask target terrain to read blocks from a buffer
         CubesSerializer.readFromBytes(blockTerrainClone, serializedBlockTerrain);

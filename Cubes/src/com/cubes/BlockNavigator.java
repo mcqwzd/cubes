@@ -22,7 +22,7 @@ public class BlockNavigator{
     
     // Get location delta by direction
     public static Vector3Int getNeighborBlockLocation_Relative(Block.Face face){
-        Vector3Int neighborLocation = new Vector3Int();
+        Vector3Int neighborLocation = Vector3Int.create();
         switch(face){
             case Top:
                 neighborLocation.set(0, 1, 0);
@@ -72,7 +72,7 @@ public class BlockNavigator{
     public static Vector3Int getPointedBlockLocation(BlockTerrainControl blockTerrain, Vector3f collisionContactPoint, boolean getNeighborLocation, Vector3f collisionNorm){
         Vector3f collisionLocation = Util.compensateFloatRoundingErrors(collisionContactPoint);
         double blockSize = (double)blockTerrain.getSettings().getBlockSize();
-        Vector3Int blockLocation = new Vector3Int(
+        Vector3Int blockLocation = Vector3Int.create(
                 (int) (collisionLocation.getX() / blockSize),
                 (int) (collisionLocation.getY() / blockSize),
                 (int) (collisionLocation.getZ() / blockSize));

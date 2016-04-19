@@ -47,8 +47,8 @@ public class SunlightChunk {
     int getGlobalZFromLocalZ(int chunkZ, int localBlockZ) {
         return (settings.getChunkSizeZ() * chunkZ) + localBlockZ;
     }
-    boolean isBlockAtOrAboveSurface(int chunkY, Vector3Int blockLocation) {
-        return getGlobalYFromLocalY(chunkY, blockLocation.getY()) >= surfaceBlockElevation[blockLocation.getX()][blockLocation.getZ()]; 
+    boolean isBlockAtOrAboveSurface(int chunkY, int blockX, int blockY, int blockZ) {
+        return getGlobalYFromLocalY(chunkY, blockY) >= surfaceBlockElevation[blockX][blockZ]; 
     }
 
     int setSolidBlock(int chunkX, int chunkY, int chunkZ, int iX, int iY, int iZ, boolean updateDelta) {
@@ -107,12 +107,12 @@ public class SunlightChunk {
         }
     }
 
-    boolean isBlockAtSurface(int chunkY, Vector3Int blockLocation) {
-        return getGlobalYFromLocalY(chunkY, blockLocation.getY()) == surfaceBlockElevation[blockLocation.getX()][blockLocation.getZ()]; 
+    boolean isBlockAtSurface(int chunkY, int blockX, int blockY, int blockZ) {
+        return getGlobalYFromLocalY(chunkY, blockY) == surfaceBlockElevation[blockX][blockZ]; 
     }
 
-    boolean isBlockAboveSurface(int chunkY, Vector3Int blockLocation) {
-        return getGlobalYFromLocalY(chunkY, blockLocation.getY()) > surfaceBlockElevation[blockLocation.getX()][blockLocation.getZ()]; 
+    boolean isBlockAboveSurface(int chunkY, int blockX, int blockY, int blockZ) {
+        return getGlobalYFromLocalY(chunkY, blockY) > surfaceBlockElevation[blockX][blockZ]; 
     }
 
 }
